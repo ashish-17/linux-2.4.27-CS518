@@ -280,6 +280,9 @@ struct user_struct {
 extern struct user_struct root_user;
 #define INIT_USER (&root_user)
 
+typedef struct task_struct task_t;
+typedef struct mlfq mlfq_t;
+
 struct task_struct {
 	/*
 	 * offsets of these are hardcoded elsewhere - touch with care
@@ -316,11 +319,11 @@ struct task_struct {
 	 * mask is AND-ed with cpus_allowed.
 	 */
 	unsigned long cpus_runnable, cpus_allowed;
-	/*
-	 * (only the 'next' pointer fits into the cacheline, but
-	 * that's just fine.)
-	 */
-	struct list_head run_list;
+
+	int priority; // Corresponds to index of priority queue.
+	list_t run_list;
+	mlfq_t *p_mlfq;
+
 	unsigned long sleep_time;
 
 	struct task_struct *next_task, *prev_task;
@@ -466,6 +469,62 @@ extern void yield(void);
 extern struct exec_domain	default_exec_domain;
 
 /*
+ * Default timeslice is 90 msecs, maximum is 300 msecs.
+ * Minimum timeslice is 10 msecs.
+ */
+#define MIN_TIMESLICE	( 10 * HZ / 1000)
+#define MAX_TIMESLICE	(300 * HZ / 1000)
+
+/*
+ * RT priorities range from 0-127
+ */
+#define MAX_RT_PRIO	128
+
+/*
+ * Other task's priorities go from 128-256
+ */
+#define MAX_PRIO	(MAX_RT_PRIO+128)
+
+/*
+ * This will range between 0 and (MAX_PRIO - MAX_RT_PRIO).
+ * {0...128}
+ */
+#define USER_PRIO(p) ((p)-MAX_RT_PRIO)
+
+/*
+ * This will have a value of (MAX_PRIO - MAX_RT_PRIO) or 128.
+ */
+#define MAX_USER_PRIO (USER_PRIO(MAX_PRIO))
+
+/*
+ * Convert user-nice values [ -20 ... 0 ... 19 ]
+ * to static priority [ MAX_RT_PRIO..MAX_PRIO-1 ],
+ * and back.
+ */
+#define NICE_TO_PRIO(nice)	(MAX_RT_PRIO + (nice) + 20)
+#define PRIO_TO_NICE(prio)	((prio) - MAX_RT_PRIO - 20)
+
+/*
+ * Assume highest priority default.
+ */
+#define DEF_PRIO 0
+
+/*
+ * Default timeslice is 90 msecs, maximum is 300 msecs.
+ * Minimum timeslice is 10 msecs.
+ */
+#define MIN_TIMESLICE	( 10 * HZ / 1000)
+#define MAX_TIMESLICE	(300 * HZ / 1000)
+
+/*
+ * A linear scale to map priorities to timeslices.
+ * Queues with higher priority value will have larger timeslices.
+ */
+#define PRIO_TO_TIMESLICE(p) \
+	(((MAX_PRIO - (MAX_PRIO - p)) / MAX_PRIO) * (MAX_TIMESLICE - MIN_TIMESLICE) + \
+	  MIN_TIMESLICE)
+
+/*
  *  INIT_TASK is used to set up the first task table, touch at
  * your own risk!. Base=0, limit=0x1fffff (=2MB)
  */
@@ -477,7 +536,7 @@ extern struct exec_domain	default_exec_domain;
     addr_limit:		KERNEL_DS,					\
     exec_domain:	&default_exec_domain,				\
     lock_depth:		-1,						\
-    counter:		DEF_COUNTER,					\
+    counter:		PRIO_TO_TIMESLICE(DEF_PRIO),					\
     nice:		DEF_NICE,					\
     policy:		SCHED_OTHER,					\
     mm:			NULL,						\

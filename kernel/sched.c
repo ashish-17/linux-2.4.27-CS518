@@ -33,6 +33,26 @@
 #include <asm/uaccess.h>
 #include <asm/mmu_context.h>
 
+#define BITMAP_SIZE ((MAX_PRIO/(8*sizeof(long))) + 1)
+
+typedef struct runqueue runqueue_t;
+
+struct mlfq {
+	int nr_active;
+	spinlock_t *lock;
+	runqueue_t *rq;
+	unsigned long bitmap[BITMAP_SIZE];
+	list_t queue[MAX_PRIO];
+};
+
+static struct runqueue {
+	int cpu;
+	spinlock_t lock;
+	unsigned long nr_running, nr_switches;
+	task_t *curr, *idle;
+	mlfq_t *active, *expired, mlfq_instants[2];
+} runqueues [NR_CPUS] __cacheline_aligned;
+
 extern void timer_bh(void);
 extern void tqueue_bh(void);
 extern void immediate_bh(void);
