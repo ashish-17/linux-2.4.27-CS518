@@ -131,11 +131,6 @@ inline int wake_up_process(task_t * p)
 	return try_to_wake_up(p, 0);
 }
 
-asmlinkage void schedule_tail(task_t *prev)
-{
-	spin_unlock_irq(&this_rq()->lock);
-}
-
 void handle_tick_process(task_t* p) {
 	runqueue_t *rq = this_rq();
 	unsigned long flags;
@@ -147,7 +142,7 @@ void handle_tick_process(task_t* p) {
 		if (++p->priority >= MAX_PRIO)
 			p->priority = MAX_PRIO - 1;
 
-		p->counter = PRIO_TO_TIMESLICE();
+		p->counter = PRIO_TO_TIMESLICE(p->priority);
 
 		// Queue the task at the tail of the next queue
 		enqueue_task(p, rq->p_mlfq);
@@ -458,40 +453,6 @@ static inline void move_last_runqueue(struct task_struct * p)
 {
 	list_del(&p->run_list);
 	list_add_tail(&p->run_list, &runqueue_head);
-}
-
-/*
- * Wake up a process. Put it on the run-queue if it's not
- * already there.  The "current" process is always on the
- * run-queue (except when the actual re-schedule is in
- * progress), and as such you're allowed to do the simpler
- * "current->state = TASK_RUNNING" to mark yourself runnable
- * without the overhead of this.
- */
-static inline int try_to_wake_up(struct task_struct * p, int synchronous)
-{
-	unsigned long flags;
-	int success = 0;
-
-	/*
-	 * We want the common case fall through straight, thus the goto.
-	 */
-	spin_lock_irqsave(&runqueue_lock, flags);
-	p->state = TASK_RUNNING;
-	if (task_on_runqueue(p))
-		goto out;
-	add_to_runqueue(p);
-	if (!synchronous || !(p->cpus_allowed & (1UL << smp_processor_id())))
-		reschedule_idle(p);
-	success = 1;
-out:
-	spin_unlock_irqrestore(&runqueue_lock, flags);
-	return success;
-}
-
-inline int wake_up_process(struct task_struct * p)
-{
-	return try_to_wake_up(p, 0);
 }
 
 static void process_timeout(unsigned long __data)
