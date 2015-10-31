@@ -192,33 +192,11 @@ struct task_struct * init_tasks[NR_CPUS] = {&init_task, };
 /*
  * The tasklist_lock protects the linked list of processes.
  *
- * The runqueue_lock locks the parts that actually access
- * and change the run-queues, and have to be interrupt-safe.
- *
- * If both locks are to be concurrently held, the runqueue_lock
- * nests inside the tasklist_lock.
- *
  * task->alloc_lock nests inside tasklist_lock.
  */
-spinlock_t runqueue_lock __cacheline_aligned = SPIN_LOCK_UNLOCKED;  /* inner */
 rwlock_t tasklist_lock __cacheline_aligned = RW_LOCK_UNLOCKED;	/* outer */
 
 static LIST_HEAD(runqueue_head);
-
-/*
- * We align per-CPU scheduling data on cacheline boundaries,
- * to prevent cacheline ping-pong.
- */
-static union {
-	struct schedule_data {
-		struct task_struct * curr;
-		cycles_t last_schedule;
-	} schedule_data;
-	char __pad [SMP_CACHE_BYTES];
-} aligned_data [NR_CPUS] __cacheline_aligned = { {{&init_task,0}}};
-
-#define cpu_curr(cpu) aligned_data[(cpu)].schedule_data.curr
-#define last_schedule(cpu) aligned_data[(cpu)].schedule_data.last_schedule
 
 struct kernel_stat kstat;
 extern struct task_struct *child_reaper;
@@ -350,7 +328,7 @@ need_resched_back:
 		BUG();
 	}
 
-	release_kernel_lock(prev, this_cpu);
+	release_kernel_lock(prev, smp_processor_id());
 	rq = this_rq();
 	spin_lock_irq(&rq->lock);
 
@@ -400,10 +378,10 @@ need_resched_back:
 			BUG_ON(next->active_mm);
 			next->active_mm = oldmm;
 			atomic_inc(&oldmm->mm_count);
-			enter_lazy_tlb(oldmm, next, this_cpu);
+			enter_lazy_tlb(oldmm, next, smp_processor_id());
 		} else {
 			BUG_ON(next->active_mm != mm);
-			switch_mm(oldmm, mm, next, this_cpu);
+			switch_mm(oldmm, mm, next, smp_processor_id());
 		}
 
 		if (!prev->mm) {
@@ -637,7 +615,6 @@ void set_user_nice(task_t *p, long nice)
 		enqueue_task(p, p_mlfq);
 	}
 
-out_unlock:
 	unlock_task_rq(rq, p, flags);
 }
 
@@ -671,7 +648,7 @@ asmlinkage long sys_nice(int increment)
 	if (newprio > 19)
 		newprio = 19;
 
-	set_user_nice(current, nice);
+	set_user_nice(current, newprio);
 	return 0;
 }
 
@@ -753,7 +730,7 @@ static int setscheduler(pid_t pid, int policy,
 	p->rt_priority = lp.sched_priority;
 
 	p->priority = NICE_TO_PRIO(p->nice);
-	if (array)
+	if (p_mlfq)
 		activate_task(p, task_rq(p));
 
 	current->need_resched = 1;
