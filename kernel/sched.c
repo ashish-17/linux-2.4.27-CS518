@@ -50,8 +50,110 @@ static struct runqueue {
 	spinlock_t lock;
 	unsigned long nr_running, nr_switches;
 	task_t *curr, *idle;
-	mlfq_t *active, *expired, mlfq_instants[2];
-} runqueues [NR_CPUS] __cacheline_aligned;
+	mlfq_t *p_mlfq, mlfq_instant[1];
+} runqueues[NR_CPUS] __cacheline_aligned;
+
+// For now let's deal with only 1 cpu
+#define this_rq()		(runqueues + 0)
+#define task_rq(p)		(runqueues + 0)
+#define cpu_rq(cpu)		(runqueues + 0)
+#define cpu_curr(cpu)	(runqueues[0].curr)
+#define rt_task(p)		((p)->policy != SCHED_OTHER)
+
+#define lock_task_rq(rq,p,flags)				\
+do {								\
+	rq = task_rq(p);					\
+	spin_lock_irqsave(&rq->lock, flags);			\
+} while (0)
+
+#define unlock_task_rq(rq,p,flags)				\
+	spin_unlock_irqrestore(&rq->lock, flags)
+
+/*
+ * Multilevel feedback queue operations.
+ */
+static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
+{
+	p_mlfq->nr_active--;
+	list_del_init(&p->run_list);
+	if (list_empty(p_mlfq->queue + p->priority))
+		__set_bit(p->priority, p_mlfq->bitmap);
+}
+
+static inline void enqueue_task(task_t *p, mlfq_t *p_mlfq)
+{
+	list_add_tail(&p->run_list, p_mlfq->queue + p->priority);
+	__clear_bit(p->priority, p_mlfq->bitmap);
+	p_mlfq->nr_active++;
+	p->p_mlfq = p_mlfq;
+}
+
+static inline void activate_task(task_t *p, runqueue_t *rq)
+{
+	enqueue_task(p, rq->p_mlfq);
+	rq->nr_running++;
+}
+
+static inline void deactivate_task(task_t *p, runqueue_t *rq)
+{
+	rq->nr_running--;
+	dequeue_task(p, p->p_mlfq);
+	p->p_mlfq = NULL;
+}
+
+static int try_to_wake_up(task_t * p, int synchronous)
+{
+	unsigned long flags;
+	int success = 0;
+	runqueue_t *rq;
+
+	lock_task_rq(rq, p, flags);
+
+	p->state = TASK_RUNNING;
+	if (!p->p_mlfq) {
+		if (!rt_task(p) && synchronous) {
+			spin_lock(&this_rq()->lock);
+			activate_task(p, this_rq());
+			spin_unlock(&this_rq()->lock);
+		} else {
+			activate_task(p, rq);
+		}
+
+		success = 1;
+	}
+
+	unlock_task_rq(rq, p, flags);
+	return success;
+}
+
+inline int wake_up_process(task_t * p)
+{
+	return try_to_wake_up(p, 0);
+}
+
+asmlinkage void schedule_tail(task_t *prev)
+{
+	spin_unlock_irq(&this_rq()->lock);
+}
+
+void handle_tick_process(task_t* p) {
+	runqueue_t *rq = this_rq();
+	unsigned long flags;
+
+	spin_lock_irqsave(&rq->lock, flags);
+	if ((p->policy != SCHED_FIFO) && !--p->counter) {
+		p->need_resched = 1;
+		dequeue_task(p, rq->p_mlfq);
+		if (++p->priority >= MAX_PRIO)
+			p->priority = MAX_PRIO - 1;
+
+		p->counter = PRIO_TO_TIMESLICE();
+
+		// Queue the task at the tail of the next queue
+		enqueue_task(p, rq->p_mlfq);
+	}
+	spin_unlock_irqrestore(&rq->lock, flags);
+}
 
 extern void timer_bh(void);
 extern void tqueue_bh(void);
@@ -1391,14 +1493,34 @@ extern void init_timervecs (void);
 
 void __init sched_init(void)
 {
-	/*
-	 * We have to do a little magic to get the first
-	 * process right in SMP mode.
-	 */
-	int cpu = smp_processor_id();
+	int i, j, k;
 	int nr;
 
+	runqueue_t *rq = cpu_rq(0);
+	mlfq_t *p_mlfq;
+
+	rq->p_mlfq = rq->mlfq_instant + 0;
+	spin_lock_init(&rq->lock);
+
+	rq->cpu = 0;
+
+	p_mlfq = rq->p_mlfq;
+	p_mlfq->rq = rq;
+	p_mlfq->lock = &rq->lock;
+	for (k = 0; k < MAX_PRIO; k++) {
+		INIT_LIST_HEAD(p_mlfq->queue + k);
+		__set_bit(k, p_mlfq->bitmap);
+	}
+
+	// zero delimiter for bitsearch
+	clear_bit(MAX_PRIO, p_mlfq->bitmap);
+
 	init_task.processor = cpu;
+
+	rq = this_rq();
+	rq->curr = current;
+	rq->idle = NULL;
+	wake_up_process(current);
 
 	for(nr = 0; nr < PIDHASH_SZ; nr++)
 		pidhash[nr] = NULL;
