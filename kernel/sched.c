@@ -131,6 +131,11 @@ inline int wake_up_process(task_t * p)
 	return try_to_wake_up(p, 0);
 }
 
+asmlinkage void schedule_tail(task_t *prev)
+{
+	spin_unlock_irq(&this_rq()->lock);
+}
+
 void handle_tick_process(task_t* p) {
 	runqueue_t *rq = this_rq();
 	unsigned long flags;
