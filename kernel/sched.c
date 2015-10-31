@@ -77,13 +77,13 @@ static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 	p_mlfq->nr_active--;
 	list_del_init(&p->run_list);
 	if (list_empty(p_mlfq->queue + p->priority))
-		__set_bit(p->priority, p_mlfq->bitmap);
+		set_bit(p->priority, p_mlfq->bitmap);
 }
 
 static inline void enqueue_task(task_t *p, mlfq_t *p_mlfq)
 {
 	list_add_tail(&p->run_list, p_mlfq->queue + p->priority);
-	__clear_bit(p->priority, p_mlfq->bitmap);
+	clear_bit(p->priority, p_mlfq->bitmap);
 	p_mlfq->nr_active++;
 	p->p_mlfq = p_mlfq;
 }
@@ -1454,9 +1454,7 @@ extern void init_timervecs (void);
 
 void __init sched_init(void)
 {
-	int i, j, k;
-	int nr;
-
+	int k, nr;
 	runqueue_t *rq = cpu_rq(0);
 	mlfq_t *p_mlfq;
 
@@ -1476,7 +1474,7 @@ void __init sched_init(void)
 	// zero delimiter for bitsearch
 	clear_bit(MAX_PRIO, p_mlfq->bitmap);
 
-	init_task.processor = cpu;
+	init_task.processor = 0;
 
 	rq = this_rq();
 	rq->curr = current;
