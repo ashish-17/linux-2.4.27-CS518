@@ -49,7 +49,7 @@ static struct runqueue {
 	int cpu;
 	spinlock_t lock;
 	unsigned long nr_running, nr_switches;
-	task_t *curr, *idle;
+	task_t *curr;
 	mlfq_t *p_mlfq, mlfq_instant[1];
 } runqueues[NR_CPUS] __cacheline_aligned;
 
@@ -1099,7 +1099,7 @@ void __init init_idle(void)
 	__cli();
 	double_rq_lock(this_rq, rq);
 
-	this_rq->curr = this_rq->idle = current;
+	this_rq->curr = current;
 	deactivate_task(current, rq);
 	current->p_mlfq = NULL;
 	current->priority = MAX_PRIO;
@@ -1142,7 +1142,6 @@ void __init sched_init(void)
 
 	rq = this_rq();
 	rq->curr = current;
-	rq->idle = NULL;
 	wake_up_process(current);
 
 	for(nr = 0; nr < PIDHASH_SZ; nr++)
