@@ -1454,7 +1454,7 @@ extern void init_timervecs (void);
 
 void __init sched_init(void)
 {
-	int k, nr;
+	int k, nr, cpu=0;
 	runqueue_t *rq = cpu_rq(0);
 	mlfq_t *p_mlfq;
 
@@ -1474,7 +1474,7 @@ void __init sched_init(void)
 	// zero delimiter for bitsearch
 	clear_bit(MAX_PRIO, p_mlfq->bitmap);
 
-	init_task.processor = 0;
+	init_task.processor = cpu;
 
 	rq = this_rq();
 	rq->curr = current;
