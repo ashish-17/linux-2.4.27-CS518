@@ -469,13 +469,6 @@ extern void yield(void);
 extern struct exec_domain	default_exec_domain;
 
 /*
- * Default timeslice is 90 msecs, maximum is 300 msecs.
- * Minimum timeslice is 10 msecs.
- */
-#define MIN_TIMESLICE	( 10 * HZ / 1000)
-#define MAX_TIMESLICE	(300 * HZ / 1000)
-
-/*
  * RT priorities range from 0-127
  */
 #define MAX_RT_PRIO	128
