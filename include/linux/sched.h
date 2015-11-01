@@ -132,7 +132,6 @@ struct completion;
  * a separate lock).
  */
 extern rwlock_t tasklist_lock;
-extern spinlock_t runqueue_lock;
 extern spinlock_t mmlist_lock;
 
 extern void sched_init(void);
