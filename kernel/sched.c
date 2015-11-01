@@ -154,9 +154,9 @@ void wake_up_forked_process(task_t * p)
 
 	spin_lock_irq(&rq->lock);
 	p->state = TASK_RUNNING;
-	p->prio = p->prio + 1;
-	if (p->prio > MAX_PRIO - 1)
-		p->prio = MAX_PRIO - 1;
+	p->priority = p->priority + 1;
+	if (p->priority > MAX_PRIO - 1)
+		p->priority = MAX_PRIO - 1;
 	activate_task(p, rq);
 	spin_unlock_irq(&rq->lock);
 }
