@@ -148,7 +148,6 @@ asmlinkage void schedule_tail(task_t *prev)
 }
 
 void handle_tick_process(task_t* p) {
-	printk(KERN_INFO "handle_tick_process\n");
 	runqueue_t *rq = this_rq();
 	unsigned long flags;
 
@@ -165,7 +164,6 @@ void handle_tick_process(task_t* p) {
 		enqueue_task(p, rq->p_mlfq);
 	}
 	spin_unlock_irqrestore(&rq->lock, flags);
-	printk(KERN_INFO "~handle_tick_process\n");
 }
 
 
@@ -1128,6 +1126,7 @@ extern void init_timervecs (void);
 
 void __init sched_init(void)
 {
+	printk(KERN_INFO "sched_init\n");
 	int k, nr, cpu=0;
 	runqueue_t *rq = cpu_rq(0);
 	mlfq_t *p_mlfq;
@@ -1165,4 +1164,5 @@ void __init sched_init(void)
 	 */
 	atomic_inc(&init_mm.mm_count);
 	enter_lazy_tlb(&init_mm, current, cpu);
+	printk(KERN_INFO "~sched_init\n");
 }
