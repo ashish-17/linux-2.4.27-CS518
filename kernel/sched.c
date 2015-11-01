@@ -102,6 +102,17 @@ static inline void deactivate_task(task_t *p, runqueue_t *rq)
 	p->p_mlfq = NULL;
 }
 
+static inline void resched_task(task_t *p)
+{
+	int need_resched;
+
+	need_resched = p->need_resched;
+	wmb();
+	p->need_resched = 1;
+	if (!need_resched)
+		smp_send_reschedule(p->cpu);
+}
+
 static int try_to_wake_up(task_t * p, int synchronous)
 {
 	printk(KERN_INFO "try_to_wake_up\n");
@@ -119,6 +130,9 @@ static int try_to_wake_up(task_t * p, int synchronous)
 			spin_unlock(&this_rq()->lock);
 		} else {
 			activate_task(p, rq);
+			if (p->priority < rq->curr->priority) {
+				resched_task(rq->curr);
+			}
 		}
 
 		success = 1;
@@ -132,6 +146,19 @@ static int try_to_wake_up(task_t * p, int synchronous)
 inline int wake_up_process(task_t * p)
 {
 	return try_to_wake_up(p, 0);
+}
+
+void wake_up_forked_process(task_t * p)
+{
+	runqueue_t *rq = this_rq();
+
+	spin_lock_irq(&rq->lock);
+	p->state = TASK_RUNNING;
+	p->prio = p->prio + 1;
+	if (p->prio > MAX_PRIO - 1)
+		p->prio = MAX_PRIO - 1;
+	activate_task(p, rq);
+	spin_unlock_irq(&rq->lock);
 }
 
 asmlinkage void schedule_tail(task_t *prev)
@@ -157,7 +184,6 @@ void handle_tick_process(task_t* p) {
 	}
 	spin_unlock_irqrestore(&rq->lock, flags);
 }
-
 
 static inline int sched_find_first_zero_bit(unsigned long bitmap[BITMAP_SIZE]) {
 	printk(KERN_INFO "sched_find_first_zero_bit\n");
@@ -354,8 +380,6 @@ need_resched_back:
 	prev->need_resched = 0;
 
 	if (unlikely(prev == next)) {
-		/* We won't go through the normal tail, so do this by hand */
-		prev->policy &= ~SCHED_YIELD;
 		goto same_process;
 	}
 
@@ -398,6 +422,8 @@ need_resched_back:
 	 * stack.
 	 */
 	switch_to(prev, next, prev);
+	barrier();
+	rq = this_rq();
 
 same_process:
 	spin_unlock_irq(&rq->lock);
@@ -617,6 +643,7 @@ void set_user_nice(task_t *p, long nice)
 	p->priority = NICE_TO_PRIO(nice);
 	if (p_mlfq) {
 		enqueue_task(p, p_mlfq);
+		resched_task(rq->curr);
 	}
 
 	unlock_task_rq(rq, p, flags);

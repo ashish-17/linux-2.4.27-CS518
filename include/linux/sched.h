@@ -457,8 +457,15 @@ struct task_struct {
  */
 #define _STK_LIM	(8*1024*1024)
 
-#define DEF_COUNTER	(10*HZ/100)	/* 100 ms time slice */
-#define MAX_COUNTER	(20*HZ/100)
+/*
+ * Default timeslice is 90 msecs, maximum is 300 msecs.
+ * Minimum timeslice is 10 msecs.
+ */
+#define MIN_TIMESLICE	( 10 * HZ / 100)
+#define MAX_TIMESLICE	(150 * HZ / 100)
+
+#define DEF_COUNTER	MIN_TIMESLICE	/* 100 ms time slice */
+#define MAX_COUNTER	MAX_TIMESLICE
 #define DEF_NICE	(0)
 
 extern void yield(void);
@@ -501,13 +508,6 @@ extern struct exec_domain	default_exec_domain;
  * Assume highest priority default.
  */
 #define DEF_PRIO 0
-
-/*
- * Default timeslice is 90 msecs, maximum is 300 msecs.
- * Minimum timeslice is 10 msecs.
- */
-#define MIN_TIMESLICE	( 50 * HZ / 1000)
-#define MAX_TIMESLICE	(150 * HZ / 1000)
 
 /*
  * A linear scale to map priorities to timeslices.
@@ -943,23 +943,8 @@ do {									\
 
 #define thread_group_leader(p)	(p->pid == p->tgid)
 
-static inline void del_from_runqueue(struct task_struct * p)
-{
-	nr_running--;
-	p->sleep_time = jiffies;
-	list_del(&p->run_list);
-	p->run_list.next = NULL;
-}
-
-static inline int task_on_runqueue(struct task_struct *p)
-{
-	return (p->run_list.next != NULL);
-}
-
 static inline void unhash_process(struct task_struct *p)
 {
-	if (task_on_runqueue(p))
-		out_of_line_bug();
 	write_lock_irq(&tasklist_lock);
 	nr_threads--;
 	unhash_pid(p);

@@ -546,7 +546,6 @@ static int __init do_boot_cpu (int apicid)
 	idle->thread.rip = (unsigned long)start_secondary;
 	idle->thread.rsp = (unsigned long)idle + THREAD_SIZE - 8;
 
-	del_from_runqueue(idle);
 	unhash_process(idle);
 	cpu_pda[cpu].pcurrent = init_tasks[cpu] = idle;
 

@@ -64,7 +64,7 @@ static void release_task(struct task_struct * p)
 		 * was given away by the parent in the first place.)
 		 */
 		current->counter += p->counter;
-		if (current->counter >= MAX_COUNTER)
+		if (current->counter > MAX_COUNTER)
 			current->counter = MAX_COUNTER;
 		p->pid = 0;
 		free_task_struct(p);

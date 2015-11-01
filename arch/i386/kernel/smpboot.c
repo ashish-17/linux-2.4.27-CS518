@@ -798,7 +798,6 @@ static void __init do_boot_cpu (int apicid)
 
 	idle->thread.eip = (unsigned long) start_secondary;
 
-	del_from_runqueue(idle);
 	unhash_process(idle);
 	init_tasks[cpu] = idle;
 
