@@ -110,7 +110,7 @@ static inline void resched_task(task_t *p)
 	wmb();
 	p->need_resched = 1;
 	if (!need_resched)
-		smp_send_reschedule(p->cpu);
+		smp_send_reschedule(p->processor);
 }
 
 static int try_to_wake_up(task_t * p, int synchronous)
