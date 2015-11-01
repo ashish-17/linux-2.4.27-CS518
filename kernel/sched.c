@@ -74,35 +74,45 @@ do {								\
  */
 static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 {
+	printk(KERN_INFO "dequeue_task\n");
 	p_mlfq->nr_active--;
 	list_del_init(&p->run_list);
 	if (list_empty(p_mlfq->queue + p->priority))
 		p_mlfq->bitmap[p->priority] = 1;
+
+	printk(KERN_INFO "~dequeue_task\n");
 }
 
 static inline void enqueue_task(task_t *p, mlfq_t *p_mlfq)
 {
+	printk(KERN_INFO "enqueue_task\n");
 	list_add_tail(&p->run_list, p_mlfq->queue + p->priority);
 	p_mlfq->bitmap[p->priority] = 0;
 	p_mlfq->nr_active++;
 	p->p_mlfq = p_mlfq;
+	printk(KERN_INFO "~enqueue_task\n");
 }
 
 static inline void activate_task(task_t *p, runqueue_t *rq)
 {
+	printk(KERN_INFO "activate_task\n");
 	enqueue_task(p, rq->p_mlfq);
 	rq->nr_running++;
+	printk(KERN_INFO "~activate_task\n");
 }
 
 static inline void deactivate_task(task_t *p, runqueue_t *rq)
 {
+	printk(KERN_INFO "deactivate_task\n");
 	rq->nr_running--;
 	dequeue_task(p, p->p_mlfq);
 	p->p_mlfq = NULL;
+	printk(KERN_INFO "~deactivate_task\n");
 }
 
 static int try_to_wake_up(task_t * p, int synchronous)
 {
+	printk(KERN_INFO "try_to_wake_up\n");
 	unsigned long flags;
 	int success = 0;
 	runqueue_t *rq;
@@ -123,6 +133,7 @@ static int try_to_wake_up(task_t * p, int synchronous)
 	}
 
 	unlock_task_rq(rq, p, flags);
+	printk(KERN_INFO "~try_to_wake_up\n");
 	return success;
 }
 
@@ -137,6 +148,7 @@ asmlinkage void schedule_tail(task_t *prev)
 }
 
 void handle_tick_process(task_t* p) {
+	printk(KERN_INFO "handle_tick_process\n");
 	runqueue_t *rq = this_rq();
 	unsigned long flags;
 
@@ -153,10 +165,12 @@ void handle_tick_process(task_t* p) {
 		enqueue_task(p, rq->p_mlfq);
 	}
 	spin_unlock_irqrestore(&rq->lock, flags);
+	printk(KERN_INFO "~handle_tick_process\n");
 }
 
 
 static inline int sched_find_first_zero_bit(unsigned long bitmap[BITMAP_SIZE]) {
+	printk(KERN_INFO "sched_find_first_zero_bit\n");
 	int count = BITMAP_SIZE, i =0;
 	for (i = 0; i < count; ++i) {
 		if (bitmap[i] == 0) {
@@ -164,6 +178,7 @@ static inline int sched_find_first_zero_bit(unsigned long bitmap[BITMAP_SIZE]) {
 		}
 	}
 
+	printk(KERN_INFO "~sched_find_first_zero_bit\n");
 	return -1;
 }
 
@@ -310,6 +325,7 @@ signed long schedule_timeout(signed long timeout)
  */
 asmlinkage void schedule(void)
 {
+	printk(KERN_INFO "schedule\n");
 	struct task_struct *prev, *next;
 	mlfq_t *p_mlfq;
 	runqueue_t *rq;
@@ -399,6 +415,8 @@ same_process:
 
 	if (current->need_resched)
 		goto need_resched_back;
+
+	printk(KERN_INFO "~schedule\n");
 	return;
 }
 
