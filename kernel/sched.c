@@ -33,7 +33,7 @@
 #include <asm/uaccess.h>
 #include <asm/mmu_context.h>
 
-#define BITMAP_SIZE ((MAX_PRIO/(8*sizeof(long))) + 1)
+#define BITMAP_SIZE (MAX_PRIO)
 
 typedef struct runqueue runqueue_t;
 
@@ -77,13 +77,13 @@ static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 	p_mlfq->nr_active--;
 	list_del_init(&p->run_list);
 	if (list_empty(p_mlfq->queue + p->priority))
-		set_bit(p->priority, p_mlfq->bitmap);
+		p_mlfq->bitmap[p->priority] = 1;
 }
 
 static inline void enqueue_task(task_t *p, mlfq_t *p_mlfq)
 {
 	list_add_tail(&p->run_list, p_mlfq->queue + p->priority);
-	clear_bit(p->priority, p_mlfq->bitmap);
+	p_mlfq->bitmap[p->priority] = 0;
 	p_mlfq->nr_active++;
 	p->p_mlfq = p_mlfq;
 }
@@ -157,18 +157,10 @@ void handle_tick_process(task_t* p) {
 
 
 static inline int sched_find_first_zero_bit(unsigned long bitmap[BITMAP_SIZE]) {
-	int count = BITMAP_SIZE, i =0, j = 0;
+	int count = BITMAP_SIZE, i =0;
 	for (i = 0; i < count; ++i) {
-		if (bitmap[i] < (~0)) {
-			int num_bits = sizeof(unsigned long) * sizeof(char);
-			for (j = 0; j < num_bits; ++j) {
-				if (bitmap[i] & (1<<j)) {
-					continue;
-				} else {
-					return (i*sizeof(unsigned long) * sizeof(char) + j);
-				}
-			}
-			break;
+		if (bitmap[i] == 0) {
+			return i;
 		}
 	}
 
@@ -1132,11 +1124,8 @@ void __init sched_init(void)
 	p_mlfq->lock = &rq->lock;
 	for (k = 0; k < MAX_PRIO; k++) {
 		INIT_LIST_HEAD(p_mlfq->queue + k);
-		__set_bit(k, p_mlfq->bitmap);
+		p_mlfq->bitmap[k] = 1;
 	}
-
-	// zero delimiter for bitsearch
-	clear_bit(MAX_PRIO, p_mlfq->bitmap);
 
 	init_task.processor = cpu;
 

@@ -514,8 +514,8 @@ extern struct exec_domain	default_exec_domain;
  * Default timeslice is 90 msecs, maximum is 300 msecs.
  * Minimum timeslice is 10 msecs.
  */
-#define MIN_TIMESLICE	( 10 * HZ / 1000)
-#define MAX_TIMESLICE	(300 * HZ / 1000)
+#define MIN_TIMESLICE	( 50 * HZ / 1000)
+#define MAX_TIMESLICE	(150 * HZ / 1000)
 
 /*
  * A linear scale to map priorities to timeslices.
