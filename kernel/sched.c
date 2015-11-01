@@ -165,7 +165,7 @@ static inline int sched_find_first_zero_bit(unsigned long bitmap[BITMAP_SIZE]) {
 				if (bitmap[i] & (1<<j)) {
 					continue;
 				} else {
-					return (i*sizeof(unsigned long) + j);
+					return (i*sizeof(unsigned long) * sizeof(char) + j);
 				}
 			}
 			break;
@@ -1102,7 +1102,7 @@ void __init init_idle(void)
 	this_rq->curr = current;
 	deactivate_task(current, rq);
 	current->p_mlfq = NULL;
-	current->priority = MAX_PRIO;
+	current->priority = MAX_PRIO-1;
 	current->state = TASK_RUNNING;
 	clear_bit(smp_processor_id(), &wait_init_idle);
 	double_rq_unlock(this_rq, rq);

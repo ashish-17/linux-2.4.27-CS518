@@ -697,11 +697,11 @@ int do_fork(unsigned long clone_flags, unsigned long stack_start,
 
 	copy_flags(clone_flags, p);
 	p->pid = get_pid(clone_flags);
+
+	INIT_LIST_HEAD(&p->run_list);
+
 	if (p->pid == 0 && current->pid != 0)
 		goto bad_fork_cleanup;
-
-	p->run_list.next = NULL;
-	p->run_list.prev = NULL;
 
 	p->p_cptr = NULL;
 	init_waitqueue_head(&p->wait_chldexit);
@@ -735,6 +735,7 @@ int do_fork(unsigned long clone_flags, unsigned long stack_start,
 		spin_lock_init(&p->sigmask_lock);
 	}
 #endif
+	p->p_mlfq = NULL;
 	p->lock_depth = -1;		/* -1 = no lock */
 	p->start_time = jiffies;
 
@@ -776,8 +777,10 @@ int do_fork(unsigned long clone_flags, unsigned long stack_start,
 	 */
 	p->counter = (current->counter + 1) >> 1;
 	current->counter >>= 1;
-	if (!current->counter)
-		current->need_resched = 1;
+	if (!current->counter) {
+		current->counter = 1;
+		handle_tick_process(current);
+	};
 
 	/*
 	 * Ok, add it to the run-queues and make it
