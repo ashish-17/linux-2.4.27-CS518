@@ -1146,6 +1146,7 @@ static inline void double_rq_unlock(runqueue_t *rq1, runqueue_t *rq2)
 
 void __init init_idle(void)
 {
+	printk(KERN_INFO "init_idle\n");
 	runqueue_t *this_rq = this_rq(), *rq = current->p_mlfq->rq;
 	unsigned long flags;
 
@@ -1166,6 +1167,7 @@ void __init init_idle(void)
 	}
 	current->need_resched = 1;
 	__sti();
+	printk(KERN_INFO "~init_idle\n");
 }
 
 extern void init_timervecs (void);
