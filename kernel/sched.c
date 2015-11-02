@@ -74,6 +74,8 @@ do {								\
  */
 static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 {
+	printk(KERN_INFO, "dequeue_task (%d)\n", p->priority);
+
 	p_mlfq->nr_active--;
 	list_del_init(&p->run_list);
 	if (list_empty(p_mlfq->queue + p->priority)) {
@@ -81,28 +83,34 @@ static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 		p_mlfq->bitmap[p->priority] = 1;
 	}
 
+	printk(KERN_INFO, "~dequeue_task(%d)\n", p->priority);
 }
 
 static inline void enqueue_task(task_t *p, mlfq_t *p_mlfq)
 {
+	printk(KERN_INFO, "enqueue_task (%d)\n", p->priority);
 	list_add_tail(&p->run_list, p_mlfq->queue + p->priority);
 	p_mlfq->bitmap[p->priority] = 0;
 	p_mlfq->nr_active++;
 	p->p_mlfq = p_mlfq;
-	printk(KERN_INFO, "enqueue_task (%d)\n", p->priority);
+	printk(KERN_INFO, "~enqueue_task (%d)\n", p->priority);
 }
 
 static inline void activate_task(task_t *p, runqueue_t *rq)
 {
+	printk(KERN_INFO, "activate_task (%d)\n", p->priority);
 	enqueue_task(p, rq->p_mlfq);
 	rq->nr_running++;
+	printk(KERN_INFO, "~activate_task (%d)\n", p->priority);
 }
 
 static inline void deactivate_task(task_t *p, runqueue_t *rq)
 {
+	printk(KERN_INFO, "deactivate_task (%d)\n", p->priority);
 	rq->nr_running--;
 	dequeue_task(p, p->p_mlfq);
 	p->p_mlfq = NULL;
+	printk(KERN_INFO, "~deactivate_task (%d)\n", p->priority);
 }
 
 static inline void resched_task(task_t *p)
@@ -353,7 +361,7 @@ signed long schedule_timeout(signed long timeout)
  */
 asmlinkage void schedule(void)
 {
-	printk(KERN_INFO "schedule\n");
+	printk(KERN_INFO "schedule (%d)\n", current->pid);
 	struct task_struct *prev, *next;
 	mlfq_t *p_mlfq;
 	runqueue_t *rq;
@@ -1146,7 +1154,7 @@ static inline void double_rq_unlock(runqueue_t *rq1, runqueue_t *rq2)
 
 void __init init_idle(void)
 {
-	printk(KERN_INFO "init_idle\n");
+	printk(KERN_INFO "init_idle (%d)\n", current->pid);
 	runqueue_t *this_rq = this_rq(), *rq = current->p_mlfq->rq;
 	unsigned long flags;
 
