@@ -185,7 +185,7 @@ void handle_tick_process(task_t* p) {
 	unsigned long flags;
 
 	spin_lock_irqsave(&rq->lock, flags);
-	if ((p->policy != SCHED_FIFO) && !--p->counter) {
+	if ((p->priority < MAX_PRIO) && (p->policy != SCHED_FIFO) && !--p->counter) {
 		p->need_resched = 1;
 		dequeue_task(p, rq->p_mlfq);
 		if (++p->priority >= MAX_PRIO)
@@ -395,7 +395,7 @@ need_resched_back:
 	}
 
 	if (unlikely(!rq->nr_running)) {
-		printk(KERN_INFO, "Turn to idle task");
+		printk(KERN_INFO "Turn to idle task");
 		next = rq->idle;
 		goto switch_tasks;
 	}
