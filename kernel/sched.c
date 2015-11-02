@@ -376,6 +376,11 @@ need_resched_back:
 
 	p_mlfq = rq->p_mlfq;
 	idx = sched_find_first_zero_bit(p_mlfq->bitmap);
+	if (idx<0) {
+		prev->need_resched = 0;
+		goto same_process;
+	}
+
 	queue = p_mlfq->queue + idx;
 	next = list_entry(queue->next, task_t, run_list);
 
