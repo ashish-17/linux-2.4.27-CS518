@@ -76,8 +76,10 @@ static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 {
 	p_mlfq->nr_active--;
 	list_del_init(&p->run_list);
-	if (list_empty(p_mlfq->queue + p->priority))
+	if (list_empty(p_mlfq->queue + p->priority)) {
+		printk(KERN_INFO, "dequeue_task list empty (%d)\n", p->priority);
 		p_mlfq->bitmap[p->priority] = 1;
+	}
 
 }
 
@@ -87,6 +89,7 @@ static inline void enqueue_task(task_t *p, mlfq_t *p_mlfq)
 	p_mlfq->bitmap[p->priority] = 0;
 	p_mlfq->nr_active++;
 	p->p_mlfq = p_mlfq;
+	printk(KERN_INFO, "enqueue_task (%d)\n", p->priority);
 }
 
 static inline void activate_task(task_t *p, runqueue_t *rq)
@@ -125,9 +128,10 @@ static int try_to_wake_up(task_t * p, int synchronous)
 
 	p->state = TASK_RUNNING;
 	if (!p->p_mlfq) {
-		if (!rt_task(p) && synchronous) {
+		if (synchronous) {
 			spin_lock(&this_rq()->lock);
 			activate_task(p, this_rq());
+			printk(KERN_INFO "Scuccess activ\n");
 			spin_unlock(&this_rq()->lock);
 		} else {
 			activate_task(p, rq);
@@ -202,7 +206,7 @@ static inline int sched_find_first_zero_bit(unsigned long bitmap[BITMAP_SIZE]) {
 		}
 	}
 
-	printk(KERN_INFO "~sched_find_first_zero_bit (%d)\n", -1);
+	printk(KERN_INFO "~sched_find_first_zero_bit (%d)\n", count);
 	return count;
 }
 
@@ -349,6 +353,7 @@ signed long schedule_timeout(signed long timeout)
  */
 asmlinkage void schedule(void)
 {
+	printk(KERN_INFO "schedule\n");
 	struct task_struct *prev, *next;
 	mlfq_t *p_mlfq;
 	runqueue_t *rq;
@@ -368,6 +373,8 @@ need_resched_back:
 	rq = this_rq();
 	spin_lock_irq(&rq->lock);
 
+	printk(KERN_INFO, "current Process ID = %d\n", current->pid);
+
 	switch (prev->state) {
 		case TASK_INTERRUPTIBLE:
 			if (signal_pending(prev)) {
@@ -380,6 +387,7 @@ need_resched_back:
 	}
 
 	if (unlikely(!rq->nr_running)) {
+		printk(KERN_INFO, "Turn to idle task");
 		next = rq->idle;
 		goto switch_tasks;
 	}
@@ -393,6 +401,7 @@ switch_tasks:
 	prev->need_resched = 0;
 
 	if (unlikely(prev == next)) {
+		printk(KERN_INFO, "Same process");
 		goto same_process;
 	}
 
@@ -445,6 +454,7 @@ same_process:
 	if (current->need_resched)
 		goto need_resched_back;
 
+	printk(KERN_INFO "~schedule\n");
 	return;
 }
 

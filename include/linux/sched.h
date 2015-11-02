@@ -458,11 +458,11 @@ struct task_struct {
 #define _STK_LIM	(8*1024*1024)
 
 /*
- * Default timeslice is 90 msecs, maximum is 300 msecs.
+ * Default timeslice is 10 msecs, maximum is 300 msecs.
  * Minimum timeslice is 10 msecs.
  */
 #define MIN_TIMESLICE	( 10 * HZ / 1000)
-#define MAX_TIMESLICE	(150 * HZ / 1000)
+#define MAX_TIMESLICE	(300 * HZ / 1000)
 
 #define DEF_COUNTER	MIN_TIMESLICE	/* 100 ms time slice */
 #define MAX_COUNTER	MAX_TIMESLICE
