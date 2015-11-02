@@ -74,7 +74,7 @@ do {								\
  */
 static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 {
-	printk(KERN_INFO "dequeue_task (%d)\n", p->priority);
+	printk(KERN_INFO "dequeue_task (%d__%d)\n",p->pid,p->priority);
 
 	p_mlfq->nr_active--;
 	list_del_init(&p->run_list);
@@ -83,34 +83,34 @@ static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 		p_mlfq->bitmap[p->priority] = 1;
 	}
 
-	printk(KERN_INFO "~dequeue_task(%d)\n", p->priority);
+	printk(KERN_INFO "~dequeue_task (%d__%d)\n",p->pid,p->priority);
 }
 
 static inline void enqueue_task(task_t *p, mlfq_t *p_mlfq)
 {
-	printk(KERN_INFO "enqueue_task (%d)\n", p->priority);
+	printk(KERN_INFO "enqueue_task (%d__%d)\n",p->pid,p->priority);
 	list_add_tail(&p->run_list, p_mlfq->queue + p->priority);
 	p_mlfq->bitmap[p->priority] = 0;
 	p_mlfq->nr_active++;
 	p->p_mlfq = p_mlfq;
-	printk(KERN_INFO "~enqueue_task (%d)\n", p->priority);
+	printk(KERN_INFO "~enqueue_task (%d__%d)\n",p->pid,p->priority);
 }
 
 static inline void activate_task(task_t *p, runqueue_t *rq)
 {
-	printk(KERN_INFO "activate_task (%d)\n", p->priority);
+	printk(KERN_INFO "activate_task (%d__%d)\n",p->pid,p->priority);
 	enqueue_task(p, rq->p_mlfq);
 	rq->nr_running++;
-	printk(KERN_INFO "~activate_task (%d)\n", p->priority);
+	printk(KERN_INFO "~activate_task (%d__%d)\n",p->pid,p->priority);
 }
 
 static inline void deactivate_task(task_t *p, runqueue_t *rq)
 {
-	printk(KERN_INFO "deactivate_task (%d)\n", p->priority);
+	printk(KERN_INFO "deactivate_task (%d__%d)\n",p->pid,p->priority);
 	rq->nr_running--;
 	dequeue_task(p, p->p_mlfq);
 	p->p_mlfq = NULL;
-	printk(KERN_INFO "~deactivate_task (%d)\n", p->priority);
+	printk(KERN_INFO "~deactivate_task (%d__%d)\n",p->pid,p->priority);
 }
 
 static inline void resched_task(task_t *p)
@@ -127,7 +127,7 @@ static inline void resched_task(task_t *p)
 
 static int try_to_wake_up(task_t * p, int synchronous)
 {
-	printk(KERN_INFO "try_to_wake_up\n");
+	printk(KERN_INFO "try_to_wake_up (%d__%d)\n",p->pid,p->priority);
 	unsigned long flags;
 	int success = 0;
 	runqueue_t *rq;
@@ -144,7 +144,7 @@ static int try_to_wake_up(task_t * p, int synchronous)
 		} else {
 			activate_task(p, rq);
 			if ((rq->curr == rq->idle) || (p->priority < rq->curr->priority)) {
-				printk(KERN_INFO, "Errorneous situation try_to_wake_up\n");
+				printk(KERN_INFO "Errorneous situation try_to_wake_up\n");
 				//resched_task(rq->curr);
 			}
 		}
@@ -153,12 +153,13 @@ static int try_to_wake_up(task_t * p, int synchronous)
 	}
 
 	unlock_task_rq(rq, p, flags);
-	printk(KERN_INFO "~try_to_wake_up\n");
+	printk(KERN_INFO "~try_to_wake_up (%d__%d)\n",p->pid,p->priority);
 	return success;
 }
 
 inline int wake_up_process(task_t * p)
 {
+	printk(KERN_INFO "wake_up_process\n");
 	return try_to_wake_up(p, 0);
 }
 
@@ -193,13 +194,13 @@ void handle_tick_process(task_t* p) {
 
 		p->counter = PRIO_TO_TIMESLICE(p->priority);
 
-		printk(KERN_INFO "Sink process %d to queue %d timeslice %d", p->pid, p->priority, p->counter);
+		printk(KERN_INFO "Sink process %d to queue %d timeslice %d\n", p->pid, p->priority, p->counter);
 
 		// Queue the task at the tail of the next queue
 		enqueue_task(p, rq->p_mlfq);
 	}
 
-	printk(KERN_INFO "No sink process %d to queue %d timeslice %d", p->pid, p->priority, p->counter);
+	printk(KERN_INFO "No sink process %d to queue %d timeslice %d\n", p->pid, p->priority, p->counter);
 
 	spin_unlock_irqrestore(&rq->lock, flags);
 }
@@ -361,7 +362,7 @@ signed long schedule_timeout(signed long timeout)
  */
 asmlinkage void schedule(void)
 {
-	printk(KERN_INFO "schedule (%d)\n", current->pid);
+	printk(KERN_INFO "schedule  (%d__%d)\n",current->pid,current->priority);
 	struct task_struct *prev, *next;
 	mlfq_t *p_mlfq;
 	runqueue_t *rq;
@@ -409,7 +410,7 @@ switch_tasks:
 	prev->need_resched = 0;
 
 	if (unlikely(prev == next)) {
-		printk(KERN_INFO "Same process");
+		printk(KERN_INFO "Same process\n");
 		goto same_process;
 	}
 
@@ -478,6 +479,7 @@ same_process:
 static inline void __wake_up_common (wait_queue_head_t *q, unsigned int mode,
 			 	     int nr_exclusive, const int sync)
 {
+	printk(KERN_INFO "__wake_up_common\n");
 	struct list_head *tmp;
 	struct task_struct *p;
 
