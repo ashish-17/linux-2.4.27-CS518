@@ -1191,6 +1191,8 @@ void __init sched_init(void)
 	spin_lock_init(&rq->lock);
 
 	rq->cpu = 0;
+	rq->nr_running = 0;
+	rq->nr_switches = 0;
 
 	p_mlfq = rq->p_mlfq;
 	p_mlfq->rq = rq;
@@ -1205,6 +1207,7 @@ void __init sched_init(void)
 	rq = this_rq();
 	rq->curr = current;
 	rq->idle = NULL;
+	current->p_mlfq = rq;
 	wake_up_process(current);
 
 	for(nr = 0; nr < PIDHASH_SZ; nr++)
