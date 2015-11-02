@@ -1207,7 +1207,6 @@ void __init sched_init(void)
 	rq = this_rq();
 	rq->curr = current;
 	rq->idle = NULL;
-	current->p_mlfq = rq;
 	wake_up_process(current);
 
 	for(nr = 0; nr < PIDHASH_SZ; nr++)
