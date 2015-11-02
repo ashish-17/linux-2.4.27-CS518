@@ -1172,7 +1172,7 @@ extern void init_timervecs (void);
 
 void __init sched_init(void)
 {
-	printk(KERN_INFO "sched_init\n");
+	printk(KERN_INFO "sched_init123\n");
 	int k, nr, cpu=0;
 	runqueue_t *rq = cpu_rq(0);
 	mlfq_t *p_mlfq;
