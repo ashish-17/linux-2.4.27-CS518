@@ -74,7 +74,7 @@ do {								\
  */
 static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 {
-	printk(KERN_INFO "dequeue_task (%d__%d)\n",p->pid,p->priority);
+	printk(KERN_INFO "dequeue_task (%d)\n",p->priority);
 
 	p_mlfq->nr_active--;
 	list_del_init(&p->run_list);
@@ -83,34 +83,34 @@ static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 		p_mlfq->bitmap[p->priority] = 1;
 	}
 
-	printk(KERN_INFO "~dequeue_task (%d__%d)\n",p->pid,p->priority);
+	printk(KERN_INFO "~dequeue_task (%d)\n",p->priority);
 }
 
 static inline void enqueue_task(task_t *p, mlfq_t *p_mlfq)
 {
-	printk(KERN_INFO "enqueue_task (%d__%d)\n",p->pid,p->priority);
+	printk(KERN_INFO "enqueue_task (%d)\n",p->priority);
 	list_add_tail(&p->run_list, p_mlfq->queue + p->priority);
 	p_mlfq->bitmap[p->priority] = 0;
 	p_mlfq->nr_active++;
 	p->p_mlfq = p_mlfq;
-	printk(KERN_INFO "~enqueue_task (%d__%d)\n",p->pid,p->priority);
+	printk(KERN_INFO "~enqueue_task (%d)\n",p->priority);
 }
 
 static inline void activate_task(task_t *p, runqueue_t *rq)
 {
-	printk(KERN_INFO "activate_task (%d__%d)\n",p->pid,p->priority);
+	printk(KERN_INFO "activate_task (%d)\n",p->priority);
 	enqueue_task(p, rq->p_mlfq);
 	rq->nr_running++;
-	printk(KERN_INFO "~activate_task (%d__%d)\n",p->pid,p->priority);
+	printk(KERN_INFO "~activate_task (%d)\n",p->priority);
 }
 
 static inline void deactivate_task(task_t *p, runqueue_t *rq)
 {
-	printk(KERN_INFO "deactivate_task (%d__%d)\n",p->pid,p->priority);
+	printk(KERN_INFO "deactivate_task (%d)\n",p->priority);
 	rq->nr_running--;
 	dequeue_task(p, p->p_mlfq);
 	p->p_mlfq = NULL;
-	printk(KERN_INFO "~deactivate_task (%d__%d)\n",p->pid,p->priority);
+	printk(KERN_INFO "~deactivate_task (%d)\n",p->priority);
 }
 
 static inline void resched_task(task_t *p)
@@ -127,7 +127,7 @@ static inline void resched_task(task_t *p)
 
 static int try_to_wake_up(task_t * p, int synchronous)
 {
-	printk(KERN_INFO "try_to_wake_up (%d__%d)\n",p->pid,p->priority);
+	printk(KERN_INFO "try_to_wake_up (%d)\n",p->priority);
 	unsigned long flags;
 	int success = 0;
 	runqueue_t *rq;
@@ -153,7 +153,7 @@ static int try_to_wake_up(task_t * p, int synchronous)
 	}
 
 	unlock_task_rq(rq, p, flags);
-	printk(KERN_INFO "~try_to_wake_up (%d__%d)\n",p->pid,p->priority);
+	printk(KERN_INFO "~try_to_wake_up (%d)\n",p->priority);
 	return success;
 }
 
@@ -362,7 +362,7 @@ signed long schedule_timeout(signed long timeout)
  */
 asmlinkage void schedule(void)
 {
-	printk(KERN_INFO "schedule  (%d__%d)\n",current->pid,current->priority);
+	printk(KERN_INFO "schedule  (%d)\n",current->priority);
 	struct task_struct *prev, *next;
 	mlfq_t *p_mlfq;
 	runqueue_t *rq;
@@ -479,7 +479,7 @@ same_process:
 static inline void __wake_up_common (wait_queue_head_t *q, unsigned int mode,
 			 	     int nr_exclusive, const int sync)
 {
-	printk(KERN_INFO "__wake_up_common\n");
+	printk(KERN_INFO "wake_up_common\n");
 	struct list_head *tmp;
 	struct task_struct *p;
 
@@ -1184,7 +1184,7 @@ extern void init_timervecs (void);
 
 void __init sched_init(void)
 {
-	printk(KERN_INFO "sched_init123\n");
+	printk(KERN_INFO "sched_init\n");
 	int k, nr, cpu=0;
 	runqueue_t *rq = cpu_rq(0);
 	mlfq_t *p_mlfq;
