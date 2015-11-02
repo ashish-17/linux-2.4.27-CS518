@@ -186,6 +186,9 @@ void handle_tick_process(task_t* p) {
 		// Queue the task at the tail of the next queue
 		enqueue_task(p, rq->p_mlfq);
 	}
+
+	printk(KERN_INFO, "No sink process %d to queue %d timeslice %d", p->pid, p->priority, p->counter);
+
 	spin_unlock_irqrestore(&rq->lock, flags);
 }
 
@@ -810,7 +813,7 @@ asmlinkage long sys_sched_getscheduler(pid_t pid)
 	read_lock(&tasklist_lock);
 	p = find_process_by_pid(pid);
 	if (p)
-		retval = p->policy & ~SCHED_YIELD;
+		retval = p->policy;
 	read_unlock(&tasklist_lock);
 
 out_nounlock:
