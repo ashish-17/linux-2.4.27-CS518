@@ -861,8 +861,8 @@ asmlinkage long sys_sched_yield(void)
 	dequeue_task(current, p_mlfq);
 
 	// Restore its timeslice
-	p->counter = PRIO_TO_TIMESLICE(p->priority);
-	printk(KERN_INFO, "Yield process %d to queue %d timeslice %d", p->pid, p->priority, p->counter);
+	current->counter = PRIO_TO_TIMESLICE(current->priority);
+	printk(KERN_INFO, "Yield process %d to queue %d timeslice %d", current->pid, current->priority, current->counter);
 
 	enqueue_task(current, p_mlfq);
 	spin_unlock_irq(&rq->lock);
