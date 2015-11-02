@@ -181,6 +181,8 @@ void handle_tick_process(task_t* p) {
 
 		p->counter = PRIO_TO_TIMESLICE(p->priority);
 
+		printk(KERN_INFO, "Sink process %d to queue %d timeslice %d", p->pid, p->priority, p->counter);
+
 		// Queue the task at the tail of the next queue
 		enqueue_task(p, rq->p_mlfq);
 	}
@@ -857,6 +859,10 @@ asmlinkage long sys_sched_yield(void)
 	spin_lock_irq(&rq->lock);
 	p_mlfq = current->p_mlfq;
 	dequeue_task(current, p_mlfq);
+
+	// Restore its timeslice
+	p->counter = PRIO_TO_TIMESLICE(p->priority);
+	printk(KERN_INFO, "Yield process %d to queue %d timeslice %d", p->pid, p->priority, p->counter);
 
 	enqueue_task(current, p_mlfq);
 	spin_unlock_irq(&rq->lock);
