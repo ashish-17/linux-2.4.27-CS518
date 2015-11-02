@@ -109,8 +109,9 @@ static inline void resched_task(task_t *p)
 	need_resched = p->need_resched;
 	wmb();
 	p->need_resched = 1;
-	if (!need_resched)
+	if (!need_resched) {
 		smp_send_reschedule(p->processor);
+	}
 }
 
 static int try_to_wake_up(task_t * p, int synchronous)
@@ -131,7 +132,8 @@ static int try_to_wake_up(task_t * p, int synchronous)
 		} else {
 			activate_task(p, rq);
 			if (p->priority < rq->curr->priority) {
-				resched_task(rq->curr);
+				printk(KERN_INFO, "Errorneous situation try_to_wake_up\n");
+				//resched_task(rq->curr);
 			}
 		}
 
@@ -643,7 +645,8 @@ void set_user_nice(task_t *p, long nice)
 	p->priority = NICE_TO_PRIO(nice);
 	if (p_mlfq) {
 		enqueue_task(p, p_mlfq);
-		resched_task(rq->curr);
+		printk(KERN_INFO, "Errorneous situation set_user_nice\n");
+		//resched_task(rq->curr);
 	}
 
 	unlock_task_rq(rq, p, flags);
