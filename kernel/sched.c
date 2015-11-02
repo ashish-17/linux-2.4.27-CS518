@@ -49,7 +49,7 @@ static struct runqueue {
 	int cpu;
 	spinlock_t lock;
 	unsigned long nr_running, nr_switches;
-	task_t *curr;
+	task_t *curr, *idle;
 	mlfq_t *p_mlfq, mlfq_instant[1];
 } runqueues[NR_CPUS] __cacheline_aligned;
 
@@ -131,7 +131,7 @@ static int try_to_wake_up(task_t * p, int synchronous)
 			spin_unlock(&this_rq()->lock);
 		} else {
 			activate_task(p, rq);
-			if (p->priority < rq->curr->priority) {
+			if ((rq->curr == rq->idle) || (p->priority < rq->curr->priority)) {
 				printk(KERN_INFO, "Errorneous situation try_to_wake_up\n");
 				//resched_task(rq->curr);
 			}
@@ -198,7 +198,7 @@ static inline int sched_find_first_zero_bit(unsigned long bitmap[BITMAP_SIZE]) {
 	}
 
 	printk(KERN_INFO "~sched_find_first_zero_bit (%d)\n", -1);
-	return -1;
+	return count;
 }
 
 extern void timer_bh(void);
@@ -374,16 +374,17 @@ need_resched_back:
 		case TASK_RUNNING:;
 	}
 
-	p_mlfq = rq->p_mlfq;
-	idx = sched_find_first_zero_bit(p_mlfq->bitmap);
-	if (idx<0) {
-		prev->need_resched = 0;
-		goto same_process;
+	if (unlikely(!rq->nr_running)) {
+		next = rq->idle;
+		goto switch_tasks;
 	}
 
+	p_mlfq = rq->p_mlfq;
+	idx = sched_find_first_zero_bit(p_mlfq->bitmap);
 	queue = p_mlfq->queue + idx;
 	next = list_entry(queue->next, task_t, run_list);
 
+switch_tasks:
 	prev->need_resched = 0;
 
 	if (unlikely(prev == next)) {
@@ -1133,10 +1134,10 @@ void __init init_idle(void)
 	__cli();
 	double_rq_lock(this_rq, rq);
 
-	this_rq->curr = current;
+	this_rq->curr = this_rq->idle = current;
 	deactivate_task(current, rq);
 	current->p_mlfq = NULL;
-	current->priority = MAX_PRIO-1;
+	current->priority = MAX_PRIO;
 	current->state = TASK_RUNNING;
 	clear_bit(smp_processor_id(), &wait_init_idle);
 	double_rq_unlock(this_rq, rq);
@@ -1174,6 +1175,7 @@ void __init sched_init(void)
 
 	rq = this_rq();
 	rq->curr = current;
+	rq->idle = NULL;
 	wake_up_process(current);
 
 	for(nr = 0; nr < PIDHASH_SZ; nr++)

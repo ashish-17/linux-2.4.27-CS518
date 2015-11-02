@@ -342,7 +342,6 @@ static void rest_init(void)
 {
 	kernel_thread(init, NULL, CLONE_FS | CLONE_FILES | CLONE_SIGNAL);
 	unlock_kernel();
-	current->need_resched = 1;
  	cpu_idle();
 } 
 
@@ -437,6 +436,9 @@ asmlinkage void __init start_kernel(void)
 #if defined(CONFIG_SYSVIPC)
 	ipc_init();
 #endif
+
+	init_idle();
+
 	rest_init();
 }
 
