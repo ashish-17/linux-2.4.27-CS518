@@ -130,7 +130,7 @@ static inline void resched_task(task_t *p)
 
 static int try_to_wake_up(task_t * p, int synchronous)
 {
-	printk(KERN_INFO "try_to_wake_up\n");
+	//printk(KERN_INFO "try_to_wake_up\n");
 	unsigned long flags;
 	int success = 0;
 	runqueue_t *rq;
@@ -156,13 +156,13 @@ static int try_to_wake_up(task_t * p, int synchronous)
 	}
 
 	unlock_task_rq(rq, p, flags);
-	printk(KERN_INFO "~try_to_wake_up\n");
+	//printk(KERN_INFO "~try_to_wake_up\n");
 	return success;
 }
 
 inline int wake_up_process(task_t * p)
 {
-	printk(KERN_INFO "wake_up_process (%d)", p->pid);
+	//printk(KERN_INFO "wake_up_process (%d)", p->pid);
 	return try_to_wake_up(p, 0);
 }
 
@@ -211,16 +211,16 @@ void handle_tick_process(task_t* p) {
 }
 
 static inline int sched_find_first_zero_bit(unsigned long bitmap[BITMAP_SIZE]) {
-	printk(KERN_INFO "sched_find_first_zero_bit\n");
+	//printk(KERN_INFO "sched_find_first_zero_bit\n");
 	int count = BITMAP_SIZE, i =0;
 	for (i = 0; i < count; ++i) {
 		if (bitmap[i] == 0) {
-			printk(KERN_INFO "~sched_find_first_zero_bit (%d)\n", i);
+			//printk(KERN_INFO "~sched_find_first_zero_bit (%d)\n", i);
 			return i;
 		}
 	}
 
-	printk(KERN_INFO "~sched_find_first_zero_bit (%d)\n", count);
+	//printk(KERN_INFO "~sched_find_first_zero_bit (%d)\n", count);
 	return count;
 }
 
@@ -387,8 +387,6 @@ need_resched_back:
 	rq = this_rq();
 	spin_lock_irq(&rq->lock);
 
-	printk(KERN_INFO "current Process ID = %d\n", current->pid);
-
 	switch (prev->state) {
 		case TASK_INTERRUPTIBLE:
 			if (signal_pending(prev)) {
@@ -468,7 +466,7 @@ same_process:
 	if (current->need_resched)
 		goto need_resched_back;
 
-	printk(KERN_INFO "~schedule\n");
+	//printk(KERN_INFO "~schedule\n");
 	return;
 }
 

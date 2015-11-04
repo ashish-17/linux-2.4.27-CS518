@@ -462,7 +462,7 @@ struct task_struct {
  * Minimum timeslice is 10 msecs.
  */
 #define MIN_TIMESLICE	( 10 * HZ / 1000)
-#define MAX_TIMESLICE	(2560 * HZ / 1000)
+#define MAX_TIMESLICE	(300 * HZ / 1000)
 
 #define DEF_COUNTER	MIN_TIMESLICE	/* 100 ms time slice */
 #define MAX_COUNTER	MAX_TIMESLICE
