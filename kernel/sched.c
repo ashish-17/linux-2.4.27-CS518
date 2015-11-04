@@ -159,11 +159,13 @@ static int try_to_wake_up(task_t * p, int synchronous)
 
 inline int wake_up_process(task_t * p)
 {
+	printk(KERN_INFO "wake_up_process (%d)", p->pid);
 	return try_to_wake_up(p, 0);
 }
 
 void wake_up_forked_process(task_t * p)
 {
+	printk(KERN_INFO "wake_up_forked_process (%d)", p->pid);
 	runqueue_t *rq = this_rq();
 
 	spin_lock_irq(&rq->lock);
@@ -173,6 +175,7 @@ void wake_up_forked_process(task_t * p)
 		p->priority = MAX_PRIO - 1;
 	activate_task(p, rq);
 	spin_unlock_irq(&rq->lock);
+	printk(KERN_INFO "~wake_up_forked_process (%d)", p->pid);
 }
 
 asmlinkage void schedule_tail(task_t *prev)
@@ -199,7 +202,7 @@ void handle_tick_process(task_t* p) {
 		enqueue_task(p, rq->p_mlfq);
 	}
 
-	printk(KERN_INFO "No sink process %d to queue %d timeslice %d", p->pid, p->priority, p->counter);
+	printk(KERN_INFO "handle_tick_process for %d in queue %d with timeslice %d", p->pid, p->priority, p->counter);
 
 	spin_unlock_irqrestore(&rq->lock, flags);
 }
@@ -1069,6 +1072,7 @@ void show_state(void)
  */
 void reparent_to_init(void)
 {
+	printk(KERN_INFO "reparent_to_init (%d)\n", current->pid);
 	write_lock_irq(&tasklist_lock);
 
 	/* Reparent to init */
@@ -1094,6 +1098,7 @@ void reparent_to_init(void)
 	current->user = INIT_USER;
 
 	write_unlock_irq(&tasklist_lock);
+	printk(KERN_INFO "~reparent_to_init (%d)\n", current->pid);
 }
 
 /*
@@ -1182,7 +1187,7 @@ extern void init_timervecs (void);
 
 void __init sched_init(void)
 {
-	printk(KERN_INFO "sched_init123\n");
+	printk(KERN_INFO "sched_init\n");
 	int k, nr, cpu=0;
 	runqueue_t *rq = cpu_rq(0);
 	mlfq_t *p_mlfq;
