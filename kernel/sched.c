@@ -106,7 +106,7 @@ static inline void activate_task(task_t *p, runqueue_t *rq)
 
 void change_queue(struct task_struct *p, int inc)
 {
-	printk(KERN_INFO "change_queue (%d)\n", p->priority);
+	//printk(KERN_INFO "change_queue (%d)\n", p->priority);
 	if (p->p_mlfq == NULL)
 		return;
 
@@ -120,7 +120,7 @@ void change_queue(struct task_struct *p, int inc)
 		p->priority = 0;
 
 	enqueue_task(p, p->p_mlfq);
-	printk(KERN_INFO "~change_queue (%d)\n", p->priority);
+	//printk(KERN_INFO "~change_queue (%d)\n", p->priority);
 }
 
 static inline void deactivate_task(task_t *p, runqueue_t *rq)
@@ -134,7 +134,7 @@ static inline void deactivate_task(task_t *p, runqueue_t *rq)
 
 static inline void resched_task(task_t *p)
 {
-	printk(KERN_INFO "resched_task (%d)\n", p->pid);
+	//printk(KERN_INFO "resched_task (%d)\n", p->pid);
 	int need_resched;
 
 	need_resched = p->need_resched;
@@ -144,7 +144,7 @@ static inline void resched_task(task_t *p)
 		smp_send_reschedule(p->processor);
 	}*/
 
-	printk(KERN_INFO "resched_task (%d)\n", p->pid);
+	//printk(KERN_INFO "resched_task (%d)\n", p->pid);
 }
 
 static int try_to_wake_up(task_t * p, int synchronous)
@@ -161,12 +161,12 @@ static int try_to_wake_up(task_t * p, int synchronous)
 		if (synchronous) {
 			spin_lock(&this_rq()->lock);
 			activate_task(p, this_rq());
-			printk(KERN_INFO "Scuccess activ\n");
+			//printk(KERN_INFO "Scuccess activ\n");
 			spin_unlock(&this_rq()->lock);
 		} else {
 			activate_task(p, rq);
 			if ((rq->curr == rq->idle) || (p->priority < rq->curr->priority)) {
-				printk(KERN_INFO "Errorneous situation try_to_wake_up\n");
+				//printk(KERN_INFO "Errorneous situation try_to_wake_up\n");
 				resched_task(rq->curr);
 			}
 		}
@@ -187,7 +187,7 @@ inline int wake_up_process(task_t * p)
 
 void wake_up_forked_process(task_t * p)
 {
-	printk(KERN_INFO "wake_up_forked_process (%d)", p->pid);
+	//printk(KERN_INFO "wake_up_forked_process (%d)", p->pid);
 	runqueue_t *rq = this_rq();
 
 	spin_lock_irq(&rq->lock);
@@ -197,7 +197,7 @@ void wake_up_forked_process(task_t * p)
 		p->priority = MAX_PRIO - 1;
 	activate_task(p, rq);
 	spin_unlock_irq(&rq->lock);
-	printk(KERN_INFO "~wake_up_forked_process (%d)", p->pid);
+	//printk(KERN_INFO "~wake_up_forked_process (%d)", p->pid);
 }
 
 asmlinkage void schedule_tail(task_t *prev)
@@ -386,7 +386,7 @@ signed long schedule_timeout(signed long timeout)
  */
 asmlinkage void schedule(void)
 {
-	printk(KERN_INFO "schedule (%d)\n", current->pid);
+	//printk(KERN_INFO "schedule (%d)\n", current->pid);
 	struct task_struct *prev, *next;
 	mlfq_t *p_mlfq;
 	runqueue_t *rq;
@@ -418,7 +418,7 @@ need_resched_back:
 	}
 
 	if (unlikely(!rq->nr_running)) {
-		printk(KERN_INFO "Turn to idle task");
+		//printk(KERN_INFO "Turn to idle task");
 		next = rq->idle;
 		goto switch_tasks;
 	}
@@ -432,7 +432,7 @@ switch_tasks:
 	prev->need_resched = 0;
 
 	if (unlikely(prev == next)) {
-		printk(KERN_INFO "Same process");
+		//printk(KERN_INFO "Same process");
 		goto same_process;
 	}
 
@@ -698,7 +698,7 @@ void set_user_nice(task_t *p, long nice)
 	p->priority = NICE_TO_PRIO(nice);
 	if (p_mlfq) {
 		enqueue_task(p, p_mlfq);
-		printk(KERN_INFO "Errorneous situation set_user_nice\n");
+		//printk(KERN_INFO "Errorneous situation set_user_nice\n");
 		resched_task(rq->curr);
 	}
 
@@ -907,7 +907,7 @@ asmlinkage long sys_sched_yield(void)
 
 	// Restore its timeslice
 	current->counter = PRIO_TO_TIMESLICE(current->priority);
-	printk(KERN_INFO "Yield process %d to queue %d timeslice %d", current->pid, current->priority, current->counter);
+	//printk(KERN_INFO "Yield process %d to queue %d timeslice %d", current->pid, current->priority, current->counter);
 
 	enqueue_task(current, p_mlfq);
 	spin_unlock_irq(&rq->lock);
@@ -1093,7 +1093,7 @@ void show_state(void)
  */
 void reparent_to_init(void)
 {
-	printk(KERN_INFO "reparent_to_init (%d)\n", current->pid);
+	//printk(KERN_INFO "reparent_to_init (%d)\n", current->pid);
 	write_lock_irq(&tasklist_lock);
 
 	/* Reparent to init */
@@ -1119,7 +1119,7 @@ void reparent_to_init(void)
 	current->user = INIT_USER;
 
 	write_unlock_irq(&tasklist_lock);
-	printk(KERN_INFO "~reparent_to_init (%d)\n", current->pid);
+	//printk(KERN_INFO "~reparent_to_init (%d)\n", current->pid);
 }
 
 /*
@@ -1180,7 +1180,7 @@ static inline void double_rq_unlock(runqueue_t *rq1, runqueue_t *rq2)
 
 void __init init_idle(void)
 {
-	printk(KERN_INFO "init_idle (%d)\n", current->pid);
+	//printk(KERN_INFO "init_idle (%d)\n", current->pid);
 	runqueue_t *this_rq = this_rq(), *rq = current->p_mlfq->rq;
 	unsigned long flags;
 
@@ -1201,14 +1201,14 @@ void __init init_idle(void)
 	}
 	current->need_resched = 1;
 	__sti();
-	printk(KERN_INFO "~init_idle\n");
+	//printk(KERN_INFO "~init_idle\n");
 }
 
 extern void init_timervecs (void);
 
 void __init sched_init(void)
 {
-	printk(KERN_INFO "sched_init\n");
+	//printk(KERN_INFO "sched_init\n");
 	int k, nr, cpu=0;
 	runqueue_t *rq = cpu_rq(0);
 	mlfq_t *p_mlfq;
@@ -1249,5 +1249,5 @@ void __init sched_init(void)
 	 */
 	atomic_inc(&init_mm.mm_count);
 	enter_lazy_tlb(&init_mm, current, cpu);
-	printk(KERN_INFO "~sched_init\n");
+	//printk(KERN_INFO "~sched_init\n");
 }
