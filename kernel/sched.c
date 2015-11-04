@@ -79,7 +79,7 @@ static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 	p_mlfq->nr_active--;
 	list_del_init(&p->run_list);
 	if (list_empty(p_mlfq->queue + p->priority)) {
-		printk(KERN_INFO "dequeue_task list empty (%d)\n", p->priority);
+		//printk(KERN_INFO "dequeue_task list empty (%d)\n", p->priority);
 		p_mlfq->bitmap[p->priority] = 1;
 	}
 
