@@ -104,6 +104,23 @@ static inline void activate_task(task_t *p, runqueue_t *rq)
 	//printk(KERN_INFO "~activate_task (%d)\n", p->priority);
 }
 
+void change_queue(struct task_struct* *p, runqueue_t *rq, bool inc)
+{
+	printk(KERN_INFO "change_queue (%d)\n", p->priority);
+	dequeue_task(p, rq->p_mlfq);
+	if (inc) {
+		p->priority = p->priority + 1;
+		if(p->priority >= MAX_PRIO)
+			p->priority = MAX_PRIO-1;
+	} else {
+		p->priority = p->priority -1;
+		if(p->priority < 0)
+			p->priority = 0;
+	}
+	enqueue_task(p, rq->p_mlfq);
+	printk(KERN_INFO "~change_queue (%d)\n", p->priority);
+}
+
 static inline void deactivate_task(task_t *p, runqueue_t *rq)
 {
 	//printk(KERN_INFO "deactivate_task (%d)\n", p->priority);
@@ -538,6 +555,7 @@ void wait_for_completion(struct completion *x)
 	spin_lock_irq(&x->wait.lock);
 	if (!x->done) {
 		DECLARE_WAITQUEUE(wait, current);
+		change_queue(current, current->p_mlfq, 0);
 
 		wait.flags |= WQ_FLAG_EXCLUSIVE;
 		__add_wait_queue_tail(&x->wait, &wait);
