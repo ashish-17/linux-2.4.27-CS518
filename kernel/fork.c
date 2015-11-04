@@ -769,18 +769,9 @@ int do_fork(unsigned long clone_flags, unsigned long stack_start,
 	p->exit_signal = clone_flags & CSIGNAL;
 	p->pdeath_signal = 0;
 
-	/*
-	 * "share" dynamic priority between parent and child, thus the
-	 * total amount of dynamic priorities in the system doesn't change,
-	 * more scheduling fairness. This is only important in the first
-	 * timeslice, on the long run the scheduling behaviour is unchanged.
-	 */
-	p->counter = (current->counter + 1) >> 1;
-	current->counter >>= 1;
-	if (!current->counter) {
-		current->counter = 1;
-		handle_tick_process(current);
-	};
+	// Assign the new process to 1st queue with its default timeslice.
+	p->priority = DEF_PRIO;
+	p->counter = PRIO_TO_TIMESLICE(DEF_PRIO);
 
 	/*
 	 * Ok, add it to the run-queues and make it
