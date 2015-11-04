@@ -115,17 +115,17 @@ static inline void deactivate_task(task_t *p, runqueue_t *rq)
 
 static inline void resched_task(task_t *p)
 {
-	printk(KERN_INFO "resched_task (%d)\n", p->priority);
+	printk(KERN_INFO "resched_task (%d)\n", p->pid);
 	int need_resched;
 
 	need_resched = p->need_resched;
 	wmb();
 	p->need_resched = 1;
-	if (!need_resched) {
+	/*if (!need_resched) {
 		smp_send_reschedule(p->processor);
-	}
+	}*/
 
-	printk(KERN_INFO "resched_task (%d)\n", p->priority);
+	printk(KERN_INFO "resched_task (%d)\n", p->pid);
 }
 
 static int try_to_wake_up(task_t * p, int synchronous)
