@@ -74,7 +74,7 @@ do {								\
  */
 static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 {
-	printk(KERN_INFO "dequeue_task (%d)\n", p->priority);
+	//printk(KERN_INFO "dequeue_task (%d)\n", p->priority);
 
 	p_mlfq->nr_active--;
 	list_del_init(&p->run_list);
@@ -83,34 +83,34 @@ static inline void dequeue_task(task_t *p, mlfq_t *p_mlfq)
 		p_mlfq->bitmap[p->priority] = 1;
 	}
 
-	printk(KERN_INFO "~dequeue_task(%d)\n", p->priority);
+	//printk(KERN_INFO "~dequeue_task(%d)\n", p->priority);
 }
 
 static inline void enqueue_task(task_t *p, mlfq_t *p_mlfq)
 {
-	printk(KERN_INFO "enqueue_task (%d)\n", p->priority);
+	//printk(KERN_INFO "enqueue_task (%d)\n", p->priority);
 	list_add_tail(&p->run_list, p_mlfq->queue + p->priority);
 	p_mlfq->bitmap[p->priority] = 0;
 	p_mlfq->nr_active++;
 	p->p_mlfq = p_mlfq;
-	printk(KERN_INFO "~enqueue_task (%d)\n", p->priority);
+	//printk(KERN_INFO "~enqueue_task (%d)\n", p->priority);
 }
 
 static inline void activate_task(task_t *p, runqueue_t *rq)
 {
-	printk(KERN_INFO "activate_task (%d)\n", p->priority);
+	//printk(KERN_INFO "activate_task (%d)\n", p->priority);
 	enqueue_task(p, rq->p_mlfq);
 	rq->nr_running++;
-	printk(KERN_INFO "~activate_task (%d)\n", p->priority);
+	//printk(KERN_INFO "~activate_task (%d)\n", p->priority);
 }
 
 static inline void deactivate_task(task_t *p, runqueue_t *rq)
 {
-	printk(KERN_INFO "deactivate_task (%d)\n", p->priority);
+	//printk(KERN_INFO "deactivate_task (%d)\n", p->priority);
 	rq->nr_running--;
 	dequeue_task(p, p->p_mlfq);
 	p->p_mlfq = NULL;
-	printk(KERN_INFO "~deactivate_task (%d)\n", p->priority);
+	//printk(KERN_INFO "~deactivate_task (%d)\n", p->priority);
 }
 
 static inline void resched_task(task_t *p)
@@ -199,13 +199,13 @@ void handle_tick_process(task_t* p) {
 
 		p->counter = PRIO_TO_TIMESLICE(p->priority);
 
-		printk(KERN_INFO "Sink process %d to queue %d timeslice %d", p->pid, p->priority, p->counter);
+		//printk(KERN_INFO "Sink process %d to queue %d timeslice %d", p->pid, p->priority, p->counter);
 
 		// Queue the task at the tail of the next queue
 		enqueue_task(p, rq->p_mlfq);
 	}
 
-	printk(KERN_INFO "handle_tick_process for %d in queue %d with timeslice %d", p->pid, p->priority, p->counter);
+	//printk(KERN_INFO "handle_tick_process for %d in queue %d with timeslice %d", p->pid, p->priority, p->counter);
 
 	spin_unlock_irqrestore(&rq->lock, flags);
 }
