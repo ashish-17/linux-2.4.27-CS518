@@ -115,6 +115,7 @@ static inline void deactivate_task(task_t *p, runqueue_t *rq)
 
 static inline void resched_task(task_t *p)
 {
+	printk(KERN_INFO "resched_task (%d)\n", p->priority);
 	int need_resched;
 
 	need_resched = p->need_resched;
@@ -123,6 +124,8 @@ static inline void resched_task(task_t *p)
 	if (!need_resched) {
 		smp_send_reschedule(p->processor);
 	}
+
+	printk(KERN_INFO "resched_task (%d)\n", p->priority);
 }
 
 static int try_to_wake_up(task_t * p, int synchronous)
@@ -144,8 +147,8 @@ static int try_to_wake_up(task_t * p, int synchronous)
 		} else {
 			activate_task(p, rq);
 			if ((rq->curr == rq->idle) || (p->priority < rq->curr->priority)) {
-				printk(KERN_INFO, "Errorneous situation try_to_wake_up\n");
-				//resched_task(rq->curr);
+				printk(KERN_INFO "Errorneous situation try_to_wake_up\n");
+				resched_task(rq->curr);
 			}
 		}
 
@@ -678,7 +681,7 @@ void set_user_nice(task_t *p, long nice)
 	if (p_mlfq) {
 		enqueue_task(p, p_mlfq);
 		printk(KERN_INFO "Errorneous situation set_user_nice\n");
-		//resched_task(rq->curr);
+		resched_task(rq->curr);
 	}
 
 	unlock_task_rq(rq, p, flags);
