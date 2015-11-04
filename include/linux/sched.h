@@ -143,7 +143,7 @@ extern void update_process_times(int user);
 extern void update_one_process(struct task_struct *p, unsigned long user,
 			       unsigned long system, int cpu);
 extern void handle_tick_process(struct task_struct* p);
-extern void change_queue(struct task_struct* *p, runqueue_t *rq, bool inc);
+extern void change_queue(struct task_struct *p, bool inc);
 
 #define	MAX_SCHEDULE_TIMEOUT	LONG_MAX
 extern signed long FASTCALL(schedule_timeout(signed long timeout));
@@ -863,7 +863,7 @@ extern long kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
 do {									\
 	wait_queue_t __wait;						\
 	init_waitqueue_entry(&__wait, current);				\
-	change_queue(current, current->p_mlfq, 0);					\
+	change_queue(current, 0);					\
 									\
 	add_wait_queue(&wq, &__wait);					\
 	for (;;) {							\
@@ -887,7 +887,7 @@ do {									\
 do {									\
 	wait_queue_t __wait;						\
 	init_waitqueue_entry(&__wait, current);				\
-	change_queue(current, current->p_mlfq, 0);					\
+	change_queue(current, 0);					\
 									\
 	add_wait_queue(&wq, &__wait);					\
 	for (;;) {							\
