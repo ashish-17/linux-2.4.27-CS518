@@ -410,7 +410,7 @@ need_resched_back:
 		case TASK_RUNNING: {
 			// If counter is not yet zero and state is TASK_RUNNING it implies the task
 			// gave up to cpu before expiration of time-slice..so we schedule it in RR fashion.
-			if (prev->counter > 0) {
+			if ((rq->nr_running > 0) && (prev->counter > 0)) { // Caution: Idle task
 
 				dequeue_task(prev, rq->p_mlfq);
 
