@@ -373,6 +373,7 @@ asmlinkage void schedule(void)
 	runqueue_t *rq;
 	list_t *queue;
 	int idx;
+	int yieldOrWait = -1; // 0 for yield and 1 for Wait (I/O)
 
 	BUG_ON(!current->active_mm);
 need_resched_back:
@@ -393,14 +394,8 @@ need_resched_back:
 				prev->state = TASK_RUNNING;
 				break;
 			}
-		case TASK_UNINTERRUPTIBLE: {
-			// IF the task is waiting (Interruptable or uninterruptable)..
-			// for I/O or something then upgrade its queue.
-			prev->priority = prev->priority - 1;
-			if (prev->priority < 0) {
-				prev->priority = 0;
-			}
-		}
+		case TASK_UNINTERRUPTIBLE:
+			yieldOrWait = 1;
 
 		default: {
 			deactivate_task(prev, rq);
@@ -408,20 +403,8 @@ need_resched_back:
 		}
 
 		case TASK_RUNNING: {
-			// If counter is not yet zero and state is TASK_RUNNING it implies the task
-			// gave up to cpu before expiration of time-slice..so we schedule it in RR fashion.
-			if ((rq->nr_running > 0) && (prev->counter > 0)) { // Caution: Idle task
-
-				dequeue_task(prev, rq->p_mlfq);
-
-				// Restore its timeslice
-				prev->counter = PRIO_TO_TIMESLICE(current->priority);
-				//printk(KERN_INFO "Yield process %d to queue %d timeslice %d", current->pid, current->priority, current->counter);
-
-				enqueue_task(prev, rq->p_mlfq);
-			}
-
-			break;
+			if (prev->counter > 0)
+				yieldOrWait = 0;
 		}
 	}
 
@@ -429,6 +412,27 @@ need_resched_back:
 		//printk(KERN_INFO "Turn to idle task");
 		next = rq->idle;
 		goto switch_tasks;
+	}
+
+	if (yieldOrWait == 0) {
+		// If counter is not yet zero and state is TASK_RUNNING it implies the task
+		// gave up to cpu before expiration of time-slice..so we schedule it in RR fashion.
+		dequeue_task(prev, rq->p_mlfq);
+
+		// Restore its timeslice
+		prev->counter = PRIO_TO_TIMESLICE(current->priority);
+		//printk(KERN_INFO "Yield process %d to queue %d timeslice %d", current->pid, current->priority, current->counter);
+
+		enqueue_task(prev, rq->p_mlfq);
+	} else if (yieldOrWait == 1) {
+
+		// IF the task is waiting (Interruptable or uninterruptable)..
+		// for I/O or something then upgrade its queue.
+		// No need to make chages to queue as it is deactivated already.
+		prev->priority = prev->priority - 1;
+		if (prev->priority < 0) {
+			prev->priority = 0;
+		}
 	}
 
 	p_mlfq = rq->p_mlfq;
