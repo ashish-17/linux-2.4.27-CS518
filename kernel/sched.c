@@ -104,25 +104,6 @@ static inline void activate_task(task_t *p, runqueue_t *rq)
 	//printk(KERN_INFO "~activate_task (%d)\n", p->priority);
 }
 
-void change_queue(struct task_struct *p, int inc)
-{
-	//printk(KERN_INFO "change_queue (%d)\n", p->priority);
-	if (p->p_mlfq == NULL)
-		return;
-
-	dequeue_task(p, p->p_mlfq);
-
-	p->priority = p->priority + inc;
-	if (p->priority >= MAX_PRIO)
-		p->priority = MAX_PRIO - 1;
-
-	if(p->priority < 0)
-		p->priority = 0;
-
-	enqueue_task(p, p->p_mlfq);
-	//printk(KERN_INFO "~change_queue (%d)\n", p->priority);
-}
-
 static inline void deactivate_task(task_t *p, runqueue_t *rq)
 {
 	//printk(KERN_INFO "deactivate_task (%d)\n", p->priority);
@@ -412,12 +393,36 @@ need_resched_back:
 				prev->state = TASK_RUNNING;
 				break;
 			}
-		case TASK_UNINTERRUPTIBLE:
-			change_queue(prev, -1); // IF the task is waiting (Interruptable or uninterruptable)..
-									// for I/O or something then upgrade its queue.
-		default:
+		case TASK_UNINTERRUPTIBLE: {
+			// IF the task is waiting (Interruptable or uninterruptable)..
+			// for I/O or something then upgrade its queue.
+			prev->priority = prev->priority - 1;
+			if (prev->priority < 0) {
+				prev->priority = 0;
+			}
+		}
+
+		default: {
 			deactivate_task(prev, rq);
-		case TASK_RUNNING:;
+			break;
+		}
+
+		case TASK_RUNNING: {
+			// If counter is not yet zero and state is TASK_RUNNING it implies the task
+			// gave up to cpu before expiration of time-slice..so we schedule it in RR fashion.
+			if (prev->counter > 0) {
+
+				dequeue_task(prev, rq->p_mlfq);
+
+				// Restore its timeslice
+				prev->counter = PRIO_TO_TIMESLICE(current->priority);
+				//printk(KERN_INFO "Yield process %d to queue %d timeslice %d", current->pid, current->priority, current->counter);
+
+				enqueue_task(prev, rq->p_mlfq);
+			}
+
+			break;
+		}
 	}
 
 	if (unlikely(!rq->nr_running)) {
@@ -897,24 +902,10 @@ out_unlock:
 
 asmlinkage long sys_sched_yield(void)
 {
-	runqueue_t *rq = this_rq();
-	mlfq_t *p_mlfq;
-
-	/*
-	 * RR in the same queue.
-	 */
-	spin_lock_irq(&rq->lock);
-	p_mlfq = current->p_mlfq;
-	dequeue_task(current, p_mlfq);
-
-	// Restore its timeslice
-	current->counter = PRIO_TO_TIMESLICE(current->priority);
-	//printk(KERN_INFO "Yield process %d to queue %d timeslice %d", current->pid, current->priority, current->counter);
-
-	enqueue_task(current, p_mlfq);
-	spin_unlock_irq(&rq->lock);
+	set_current_state(TASK_RUNNING);
 
 	schedule();
+
 	return 0;
 }
 
