@@ -412,6 +412,9 @@ need_resched_back:
 				prev->state = TASK_RUNNING;
 				break;
 			}
+		case TASK_UNINTERRUPTIBLE:
+			change_queue(prev, -1); // IF the task is waiting (Interruptable or uninterruptable)..
+									// for I/O or something then upgrade its queue.
 		default:
 			deactivate_task(prev, rq);
 		case TASK_RUNNING:;
@@ -557,7 +560,6 @@ void wait_for_completion(struct completion *x)
 	spin_lock_irq(&x->wait.lock);
 	if (!x->done) {
 		DECLARE_WAITQUEUE(wait, current);
-		change_queue(current, -1);
 
 		wait.flags |= WQ_FLAG_EXCLUSIVE;
 		__add_wait_queue_tail(&x->wait, &wait);
