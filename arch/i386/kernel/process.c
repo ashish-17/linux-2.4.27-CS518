@@ -125,17 +125,19 @@ static void poll_idle (void)
  */
 void cpu_idle (void)
 {
-	//printk(KERN_INFO "cpu_idle (%d)", current->pid);
+	printk(KERN_INFO "cpu_idle (%d)", current->pid);
 	while (1) {
 		void (*idle)(void) = pm_idle;
 		if (!idle)
 			idle = default_idle;
 		while (!current->need_resched)
 			idle();
+
+		printk(KERN_INFO "cpu_idle call to schedule (%d)", current->pid);
 		schedule();
 		check_pgt_cache();
 	}
-	//printk(KERN_INFO "~cpu_idle (%d)", current->pid);
+	printk(KERN_INFO "~cpu_idle (%d)", current->pid);
 }
 
 static int __init idle_setup (char *str)

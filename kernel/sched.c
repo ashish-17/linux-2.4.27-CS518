@@ -418,27 +418,29 @@ need_resched_back:
 		goto switch_tasks;
 	}
 
-	if (yieldOrWait == 0) {
-		// If counter is not yet zero and state is TASK_RUNNING it implies the task
-		// gave up to cpu before expiration of time-slice..so we schedule it in RR fashion.
-		dequeue_task(prev, rq->p_mlfq);
+	if (prev != rq->idle) {
+		if (yieldOrWait == 0) {
+			// If counter is not yet zero and state is TASK_RUNNING it implies the task
+			// gave up to cpu before expiration of time-slice..so we schedule it in RR fashion.
+			dequeue_task(prev, rq->p_mlfq);
 
-		// Restore its timeslice
-		prev->counter = PRIO_TO_TIMESLICE(current->priority);
-		printk(KERN_INFO "Yield process %d to queue %d timeslice %d", current->pid, current->priority, current->counter);
+			// Restore its timeslice
+			prev->counter = PRIO_TO_TIMESLICE(current->priority);
+			printk(KERN_INFO "Yield process %d to queue %d timeslice %d", current->pid, current->priority, current->counter);
 
-		enqueue_task(prev, rq->p_mlfq);
-	} else if (yieldOrWait == 1) {
+			enqueue_task(prev, rq->p_mlfq);
+		} else if (yieldOrWait == 1) {
 
-		// IF the task is waiting (Interruptable or uninterruptable)..
-		// for I/O or something then upgrade its queue.
-		// No need to make chages to queue as it is deactivated already.
-		prev->priority = prev->priority - 1;
-		if (prev->priority < 0) {
-			prev->priority = 0;
+			// IF the task is waiting (Interruptable or uninterruptable)..
+			// for I/O or something then upgrade its queue.
+			// No need to make chages to queue as it is deactivated already.
+			prev->priority = prev->priority - 1;
+			if (prev->priority < 0) {
+				prev->priority = 0;
+			}
+
+			printk(KERN_INFO "Task going to wait for i/o");
 		}
-
-		printk(KERN_INFO "Task going to wait for i/o");
 	}
 
 	p_mlfq = rq->p_mlfq;
@@ -1183,7 +1185,7 @@ static inline void double_rq_unlock(runqueue_t *rq1, runqueue_t *rq2)
 
 void __init init_idle(void)
 {
-	//printk(KERN_INFO "init_idle (%d)\n", current->pid);
+	printk(KERN_INFO "init_idle (%d)\n", current->pid);
 	runqueue_t *this_rq = this_rq(), *rq = current->p_mlfq->rq;
 	unsigned long flags;
 
@@ -1204,14 +1206,14 @@ void __init init_idle(void)
 	}
 	current->need_resched = 1;
 	__sti();
-	//printk(KERN_INFO "~init_idle\n");
+	printk(KERN_INFO "~init_idle\n");
 }
 
 extern void init_timervecs (void);
 
 void __init sched_init(void)
 {
-	//printk(KERN_INFO "sched_init\n");
+	printk(KERN_INFO "sched_init\n");
 	int k, nr, cpu=0;
 	runqueue_t *rq = cpu_rq(0);
 	mlfq_t *p_mlfq;
@@ -1252,5 +1254,5 @@ void __init sched_init(void)
 	 */
 	atomic_inc(&init_mm.mm_count);
 	enter_lazy_tlb(&init_mm, current, cpu);
-	//printk(KERN_INFO "~sched_init\n");
+	printk(KERN_INFO "~sched_init\n");
 }
