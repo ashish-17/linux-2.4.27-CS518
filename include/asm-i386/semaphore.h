@@ -45,6 +45,7 @@ struct semaphore {
 	atomic_t count;
 	int sleepers;
 	wait_queue_head_t wait;
+	struct task_struct* task_owner;//point to the task jump into critical section 
 #if WAITQUEUE_DEBUG
 	long __magic;
 #endif
@@ -120,7 +121,7 @@ static inline void down(struct semaphore * sem)
 	__asm__ __volatile__(
 		"# atomic down operation\n\t"
 		LOCK "decl %0\n\t"     /* --sem->count */
-		"js 2f\n"
+		"jmp 2f\n"
 		"1:\n"
 		LOCK_SECTION_START("")
 		"2:\tcall __down_failed\n\t"

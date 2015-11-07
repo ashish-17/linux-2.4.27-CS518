@@ -141,8 +141,10 @@ typedef struct __wait_queue_head wait_queue_head_t;
 	task_list:	{ NULL, NULL },					\
 			 __WAITQUEUE_DEBUG_INIT(name)}
 
-#define DECLARE_WAITQUEUE(name, tsk)					\
-	wait_queue_t name = __WAITQUEUE_INITIALIZER(name, tsk)
+#define DECLARE_WAITQUEUE(name, tsk){			\
+	wait_queue_t name = __WAITQUEUE_INITIALIZER(name, tsk); \
+	tsk->waitQueue = &name; \
+}
 
 #define __WAIT_QUEUE_HEAD_INITIALIZER(name) {				\
 	lock:		WAITQUEUE_RW_LOCK_UNLOCKED,			\
@@ -217,7 +219,21 @@ static inline void __add_wait_queue_tail(wait_queue_head_t *head,
 	if (!head->task_list.next || !head->task_list.prev)
 		WQ_BUG();
 #endif
-	list_add_tail(&new->task_list, &head->task_list);
+	//priority inversion
+	if(new->task->policy)
+	{
+		wait_queue_t *waitQueue;
+		struct list_head *tmp;
+		list_for_each(tmp,&(head->task_list))
+		{
+			waitQueue = list_entry(tmp,wait_queue_t,task_list);
+			if(waitQueue->flags & WQ_FLAG_EXCLUSIVE && new->task->priority < waitQueue->task->priority)
+				break
+		};
+
+		list_add_tail(new->task_list,tmp);
+	}
+	else list_add_tail(&new->task_list, &head->task_list);
 }
 
 static inline void __remove_wait_queue(wait_queue_head_t *head,

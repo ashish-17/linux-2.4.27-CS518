@@ -318,9 +318,20 @@ struct task_struct {
 	 * To determine whether a process might run on a CPU, this
 	 * mask is AND-ed with cpus_allowed.
 	 */
+
+	 // priority inversion begin
+	 unsigned long orig_policy;
+	 int orig_priority;
+	 int sem_count;//number of semaphore obtain and not released
+	 struct semaphore *sem;
+	 wait_queue_t *waitQueue;
+
+	 // priority inversion end
+
 	unsigned long cpus_runnable, cpus_allowed;
 
 	int priority; // Corresponds to index of priority queue.
+
 	list_t run_list;
 	mlfq_t *p_mlfq;
 
