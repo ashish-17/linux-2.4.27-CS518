@@ -45,6 +45,7 @@ struct semaphore {
 	atomic_t count;
 	int sleepers;
 	wait_queue_head_t wait;
+	//priority inversion
 	struct task_struct* task_owner;//point to the task jump into critical section 
 #if WAITQUEUE_DEBUG
 	long __magic;
