@@ -143,8 +143,8 @@ extern void update_process_times(int user);
 extern void update_one_process(struct task_struct *p, unsigned long user,
 			       unsigned long system, int cpu);
 extern void handle_tick_process(struct task_struct* p);
-extern void do_priority_parenting(task_t *h, task_t *l);
-extern void undo_priority_parenting(task_t *l);
+extern void do_priority_parenting(struct task_struct *h, struct task_struct *l);
+extern void undo_priority_parenting(struct task_struct *l);
 
 #define	MAX_SCHEDULE_TIMEOUT	LONG_MAX
 extern signed long FASTCALL(schedule_timeout(signed long timeout));
