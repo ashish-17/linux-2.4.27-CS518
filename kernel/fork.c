@@ -736,6 +736,8 @@ int do_fork(unsigned long clone_flags, unsigned long stack_start,
 	}
 #endif
 	p->p_mlfq = NULL;
+	p->waiting_on = NULL;
+	p->old_priority = -1;
 	p->lock_depth = -1;		/* -1 = no lock */
 	p->start_time = jiffies;
 

@@ -45,6 +45,8 @@ struct semaphore {
 	atomic_t count;
 	int sleepers;
 	wait_queue_head_t wait;
+	int is_mutex; // Is used as mutex or semaphore?
+	struct task_struct *holder;
 #if WAITQUEUE_DEBUG
 	long __magic;
 #endif
@@ -80,6 +82,8 @@ static inline void sema_init (struct semaphore *sem, int val)
  */
 	atomic_set(&sem->count, val);
 	sem->sleepers = 0;
+	sem->is_mutex = 0;
+	sem->holder = NULL;
 	init_waitqueue_head(&sem->wait);
 #if WAITQUEUE_DEBUG
 	sem->__magic = (int)&sem->__magic;
@@ -89,11 +93,13 @@ static inline void sema_init (struct semaphore *sem, int val)
 static inline void init_MUTEX (struct semaphore *sem)
 {
 	sema_init(sem, 1);
+	sem->is_mutex = 1;
 }
 
 static inline void init_MUTEX_LOCKED (struct semaphore *sem)
 {
 	sema_init(sem, 0);
+	sem->is_mutex = 1;
 }
 
 asmlinkage void __down_failed(void /* special register calling convention */);

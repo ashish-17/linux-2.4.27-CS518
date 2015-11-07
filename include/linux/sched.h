@@ -143,6 +143,8 @@ extern void update_process_times(int user);
 extern void update_one_process(struct task_struct *p, unsigned long user,
 			       unsigned long system, int cpu);
 extern void handle_tick_process(struct task_struct* p);
+extern void do_priority_parenting(task_t *h, task_t *l);
+extern void undo_priority_parenting(task_t *l);
 
 #define	MAX_SCHEDULE_TIMEOUT	LONG_MAX
 extern signed long FASTCALL(schedule_timeout(signed long timeout));
@@ -321,8 +323,12 @@ struct task_struct {
 	unsigned long cpus_runnable, cpus_allowed;
 
 	int priority; // Corresponds to index of priority queue.
-	list_t run_list;
-	mlfq_t *p_mlfq;
+	list_t run_list; // Corresponds to a node in the scheduler queue, which is representative of this task
+	mlfq_t *p_mlfq; // Which mlfq this task belongs to?
+
+	int old_priority; // Old priority before using the parent's priority.
+						//If not using the parent's priority, then should have a value of -1
+	task_t *waiting_on; // Which task is it waiting for?
 
 	unsigned long sleep_time;
 

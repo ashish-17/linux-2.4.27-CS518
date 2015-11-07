@@ -113,6 +113,26 @@ static inline void deactivate_task(task_t *p, runqueue_t *rq)
 	//printk(KERN_INFO "~deactivate_task (%d)\n", p->priority);
 }
 
+void do_priority_parenting(task_t *h, task_t *l) {
+	printk(KERN_INFO "do_priority_parenting (%d)\n", l->priority);
+	l->old_priority = l->priority;
+	l->priority = h->priority;
+
+	deactivate_task(l, this_rq());
+	activate_task(l, this_rq());
+	printk(KERN_INFO "do_priority_parenting (%d)\n", l->priority);
+}
+
+void undo_priority_parenting(task_t *l) {
+	printk(KERN_INFO "undo_priority_parenting (%d)\n", l->priority);
+	l->priority = l->old_priority;
+	l->old_priority = -1;
+
+	deactivate_task(l, this_rq());
+	activate_task(l, this_rq());
+	printk(KERN_INFO "undo_priority_parenting (%d)\n", l->priority);
+}
+
 static inline void resched_task(task_t *p)
 {
 	//printk(KERN_INFO "resched_task (%d)\n", p->pid);
