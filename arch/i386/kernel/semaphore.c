@@ -50,10 +50,13 @@
 void __up(struct semaphore *sem)
 {
 	if (sem->is_mutex == 1) {
+		printk(KERN_INFO "__up sem->is_mutex == 1");
 		if (sem->holder != NULL) {
+			printk(KERN_INFO "__up sem->holder != NULL");
 
 			// Get it back to its original priority if needed
 			if (sem->holder->old_priority != -1) {
+				printk(KERN_INFO "__up sem->holder->old_priority != -1");
 				undo_priority_parenting(sem->holder);
 			}
 
@@ -85,6 +88,7 @@ void __down(struct semaphore * sem)
 		if (!atomic_add_negative(sleepers - 1, &sem->count)) {
 			sem->sleepers = 0;
 			if (sem->is_mutex == 1) {
+				printk(KERN_INFO "__down sem->is_mutex == 1");
 				sem->holder = current;
 			}
 
@@ -95,6 +99,7 @@ void __down(struct semaphore * sem)
 		spin_unlock_irq(&semaphore_lock);
 
 		if (sem->is_mutex == 1) {
+			printk(KERN_INFO "__down sem->is_mutex(!) == 1");
 
 			if (sem->holder == NULL) {
 				printk(KERN_INFO "Error, There should be a lock holder (%d)\n", current->priority);
@@ -152,6 +157,7 @@ int __down_interruptible(struct semaphore * sem)
 		if (!atomic_add_negative(sleepers - 1, &sem->count)) {
 			sem->sleepers = 0;
 			if (sem->is_mutex == 1) {
+				printk(KERN_INFO "__down_interruptible sem->is_mutex == 1");
 				sem->holder = current;
 			}
 
@@ -161,6 +167,7 @@ int __down_interruptible(struct semaphore * sem)
 		spin_unlock_irq(&semaphore_lock);
 
 		if (sem->is_mutex == 1) {
+			printk(KERN_INFO "__down_interruptible sem->is_mutex(!) == 1");
 
 			if (sem->holder == NULL) {
 				printk(KERN_INFO "Error, There should be a lock holder (%d)\n", current->priority);
@@ -206,6 +213,7 @@ int __down_trylock(struct semaphore * sem)
 	 */
 	if (!atomic_add_negative(sleepers, &sem->count)) {
 		if (sem->is_mutex == 1) {
+			printk(KERN_INFO "__down_trylock sem->is_mutex == 1");
 			sem->holder = current;
 		}
 
