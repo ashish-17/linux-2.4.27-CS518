@@ -103,7 +103,7 @@ void __down(struct semaphore * sem)
 
 			if (sem->holder != NULL) {
 				tsk->waiting_on = sem->holder;
-				if (sem->holder->priority < tsk->priority) {
+				if (sem->holder->priority > tsk->priority) {
 					do_priority_parenting(tsk, sem->holder);
 				}
 			} else {
@@ -171,7 +171,7 @@ int __down_interruptible(struct semaphore * sem)
 
 			if (sem->holder != NULL) {
 				tsk->waiting_on = sem->holder;
-				if (sem->holder->priority < tsk->priority) {
+				if (sem->holder->priority > tsk->priority) {
 					//do_priority_parenting(tsk, sem->holder);
 				}
 			} else {
