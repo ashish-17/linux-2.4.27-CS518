@@ -97,7 +97,7 @@ void __down(struct semaphore * sem)
 		if (sem->is_mutex == 1) {
 
 			if (sem->holder == NULL) {
-				printk(KERN_ERROR "Error, There should be a lock holder (%d)\n", current->priority);
+				printk(KERN_INFO "Error, There should be a lock holder (%d)\n", current->priority);
 			}
 
 			tsk->waiting_on = sem->holder;
@@ -163,7 +163,7 @@ int __down_interruptible(struct semaphore * sem)
 		if (sem->is_mutex == 1) {
 
 			if (sem->holder == NULL) {
-				printk(KERN_ERROR "Error, There should be a lock holder (%d)\n", current->priority);
+				printk(KERN_INFO "Error, There should be a lock holder (%d)\n", current->priority);
 			}
 
 			tsk->waiting_on = sem->holder;
