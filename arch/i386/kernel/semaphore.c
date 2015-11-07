@@ -49,7 +49,7 @@
 
 void __up(struct semaphore *sem)
 {
-	/*if (sem->is_mutex == 1) {
+	if (sem->is_mutex == 1) {
 		//printk(KERN_INFO "__up sem->is_mutex == 1");
 		if (sem->holder != NULL) {
 			//printk(KERN_INFO "__up sem->holder != NULL");
@@ -57,12 +57,12 @@ void __up(struct semaphore *sem)
 			// Get it back to its original priority if needed
 			if (sem->holder->old_priority != -1) {
 				//printk(KERN_INFO "__up sem->holder->old_priority != -1");
-				undo_priority_parenting(sem->holder);
+				//undo_priority_parenting(sem->holder);
 			}
 
 			sem->holder = NULL;
 		}
-	}*/
+	}
 
 	wake_up(&sem->wait);
 }
@@ -87,10 +87,10 @@ void __down(struct semaphore * sem)
 		 */
 		if (!atomic_add_negative(sleepers - 1, &sem->count)) {
 			sem->sleepers = 0;
-			/*if (sem->is_mutex == 1) {
+			if (sem->is_mutex == 1) {
 				//printk(KERN_INFO "__down sem->is_mutex == 1");
 				sem->holder = current;
-			}*/
+			}
 
 			break;
 		}
@@ -98,18 +98,18 @@ void __down(struct semaphore * sem)
 		sem->sleepers = 1;	/* us - see -1 above */
 		spin_unlock_irq(&semaphore_lock);
 
-		/*if (sem->is_mutex == 1) {
+		if (sem->is_mutex == 1) {
 			//printk(KERN_INFO "__down sem->is_mutex(!) == 1");
 
-			if (sem->holder == NULL) {
-				//printk(KERN_INFO "Error, There should be a lock holder (%d)\n", current->priority);
+			if (sem->holder != NULL) {
+				tsk->waiting_on = sem->holder;
+				if (sem->holder->priority < tsk->priority) {
+					//do_priority_parenting(tsk, sem->holder);
+				}
+			} else {
+				printk(KERN_INFO "__down error");
 			}
-
-			tsk->waiting_on = sem->holder;
-			if (sem->holder->priority < tsk->priority) {
-				do_priority_parenting(tsk, sem->holder);
-			}
-		}*/
+		}
 
 		schedule();
 		tsk->state = TASK_UNINTERRUPTIBLE;
@@ -156,28 +156,28 @@ int __down_interruptible(struct semaphore * sem)
 		 */
 		if (!atomic_add_negative(sleepers - 1, &sem->count)) {
 			sem->sleepers = 0;
-			/*if (sem->is_mutex == 1) {
+			if (sem->is_mutex == 1) {
 				//printk(KERN_INFO "__down_interruptible sem->is_mutex == 1");
 				sem->holder = current;
-			}*/
+			}
 
 			break;
 		}
 		sem->sleepers = 1;	/* us - see -1 above */
 		spin_unlock_irq(&semaphore_lock);
 
-		/*if (sem->is_mutex == 1) {
-			//printk(KERN_INFO "__down_interruptible sem->is_mutex(!) == 1");
+		if (sem->is_mutex == 1) {
+			//printk(KERN_INFO "__down sem->is_mutex(!) == 1");
 
-			if (sem->holder == NULL) {
-				//printk(KERN_INFO "Error, There should be a lock holder (%d)\n", current->priority);
+			if (sem->holder != NULL) {
+				tsk->waiting_on = sem->holder;
+				if (sem->holder->priority < tsk->priority) {
+					//do_priority_parenting(tsk, sem->holder);
+				}
+			} else {
+				printk(KERN_INFO "__down_interruptible error");
 			}
-
-			tsk->waiting_on = sem->holder;
-			if (sem->holder->priority < tsk->priority) {
-				do_priority_parenting(tsk, sem->holder);
-			}
-		}*/
+		}
 
 		schedule();
 		tsk->state = TASK_INTERRUPTIBLE;
@@ -212,10 +212,10 @@ int __down_trylock(struct semaphore * sem)
 	 * playing, because we own the spinlock.
 	 */
 	if (!atomic_add_negative(sleepers, &sem->count)) {
-		/*if (sem->is_mutex == 1) {
+		if (sem->is_mutex == 1) {
 			//printk(KERN_INFO "__down_trylock sem->is_mutex == 1");
 			sem->holder = current;
-		}*/
+		}
 
 		wake_up(&sem->wait);
 	}
