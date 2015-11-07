@@ -49,7 +49,7 @@
 
 void __up(struct semaphore *sem)
 {
-	if (sem->is_mutex == 1) {
+	/*if (sem->is_mutex == 1) {
 		//printk(KERN_INFO "__up sem->is_mutex == 1");
 		if (sem->holder != NULL) {
 			//printk(KERN_INFO "__up sem->holder != NULL");
@@ -62,7 +62,7 @@ void __up(struct semaphore *sem)
 
 			sem->holder = NULL;
 		}
-	}
+	}*/
 
 	wake_up(&sem->wait);
 }
@@ -87,10 +87,10 @@ void __down(struct semaphore * sem)
 		 */
 		if (!atomic_add_negative(sleepers - 1, &sem->count)) {
 			sem->sleepers = 0;
-			if (sem->is_mutex == 1) {
+			/*if (sem->is_mutex == 1) {
 				//printk(KERN_INFO "__down sem->is_mutex == 1");
 				sem->holder = current;
-			}
+			}*/
 
 			break;
 		}
@@ -98,7 +98,7 @@ void __down(struct semaphore * sem)
 		sem->sleepers = 1;	/* us - see -1 above */
 		spin_unlock_irq(&semaphore_lock);
 
-		if (sem->is_mutex == 1) {
+		/*if (sem->is_mutex == 1) {
 			//printk(KERN_INFO "__down sem->is_mutex(!) == 1");
 
 			if (sem->holder == NULL) {
@@ -109,7 +109,7 @@ void __down(struct semaphore * sem)
 			if (sem->holder->priority < tsk->priority) {
 				do_priority_parenting(tsk, sem->holder);
 			}
-		}
+		}*/
 
 		schedule();
 		tsk->state = TASK_UNINTERRUPTIBLE;
@@ -156,17 +156,17 @@ int __down_interruptible(struct semaphore * sem)
 		 */
 		if (!atomic_add_negative(sleepers - 1, &sem->count)) {
 			sem->sleepers = 0;
-			if (sem->is_mutex == 1) {
+			/*if (sem->is_mutex == 1) {
 				//printk(KERN_INFO "__down_interruptible sem->is_mutex == 1");
 				sem->holder = current;
-			}
+			}*/
 
 			break;
 		}
 		sem->sleepers = 1;	/* us - see -1 above */
 		spin_unlock_irq(&semaphore_lock);
 
-		if (sem->is_mutex == 1) {
+		/*if (sem->is_mutex == 1) {
 			//printk(KERN_INFO "__down_interruptible sem->is_mutex(!) == 1");
 
 			if (sem->holder == NULL) {
@@ -177,7 +177,7 @@ int __down_interruptible(struct semaphore * sem)
 			if (sem->holder->priority < tsk->priority) {
 				do_priority_parenting(tsk, sem->holder);
 			}
-		}
+		}*/
 
 		schedule();
 		tsk->state = TASK_INTERRUPTIBLE;
@@ -212,10 +212,10 @@ int __down_trylock(struct semaphore * sem)
 	 * playing, because we own the spinlock.
 	 */
 	if (!atomic_add_negative(sleepers, &sem->count)) {
-		if (sem->is_mutex == 1) {
+		/*if (sem->is_mutex == 1) {
 			//printk(KERN_INFO "__down_trylock sem->is_mutex == 1");
 			sem->holder = current;
-		}
+		}*/
 
 		wake_up(&sem->wait);
 	}
