@@ -115,21 +115,31 @@ static inline void deactivate_task(task_t *p, runqueue_t *rq)
 
 void do_priority_parenting(struct task_struct *h, struct task_struct *l) {
 	//printk(KERN_INFO "do_priority_parenting (%d)\n", l->priority);
+	runqueue_t *rq = this_rq();
+	spin_lock_irq(&rq->lock);
+
 	l->old_priority = l->priority;
 	l->priority = h->priority;
 
-	deactivate_task(l, this_rq());
-	activate_task(l, this_rq());
+	deactivate_task(l, rq);
+	activate_task(l, rq);
+
+	spin_unlock_irq(&rq->lock);
 	//printk(KERN_INFO "do_priority_parenting (%d)\n", l->priority);
 }
 
 void undo_priority_parenting(struct task_struct *l) {
 	//printk(KERN_INFO "undo_priority_parenting (%d)\n", l->priority);
+	runqueue_t *rq = this_rq();
+	spin_lock_irq(&rq->lock);
+
 	l->priority = l->old_priority;
 	l->old_priority = -1;
 
-	deactivate_task(l, this_rq());
-	activate_task(l, this_rq());
+	deactivate_task(l, rq);
+	activate_task(l, rq);
+
+	spin_unlock_irq(&rq->lock);
 	//printk(KERN_INFO "undo_priority_parenting (%d)\n", l->priority);
 }
 
