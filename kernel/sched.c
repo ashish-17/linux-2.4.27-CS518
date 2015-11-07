@@ -119,10 +119,12 @@ void do_priority_parenting(struct task_struct *h, struct task_struct *l) {
 	unsigned long flags;
 	lock_task_rq(rq, l, flags);
 
+
+	deactivate_task(l, rq);
+
 	l->old_priority = l->priority;
 	l->priority = h->priority;
 
-	deactivate_task(l, rq);
 	activate_task(l, rq);
 
 	unlock_task_rq(rq, l, flags);
@@ -135,10 +137,11 @@ void undo_priority_parenting(struct task_struct *l) {
 	unsigned long flags;
 	lock_task_rq(rq, l, flags);
 
+	deactivate_task(l, rq);
+
 	l->priority = l->old_priority;
 	l->old_priority = -1;
 
-	deactivate_task(l, rq);
 	activate_task(l, rq);
 
 	unlock_task_rq(rq, l, flags);
