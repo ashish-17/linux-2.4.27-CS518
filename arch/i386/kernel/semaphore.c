@@ -57,7 +57,7 @@ void __up(struct semaphore *sem)
 			// Get it back to its original priority if needed
 			if (sem->holder->old_priority != -1) {
 				//printk(KERN_INFO "__up sem->holder->old_priority != -1");
-				//undo_priority_parenting(sem->holder);
+				undo_priority_parenting(sem->holder);
 			}
 
 			sem->holder = NULL;
@@ -104,7 +104,7 @@ void __down(struct semaphore * sem)
 			if (sem->holder != NULL) {
 				tsk->waiting_on = sem->holder;
 				if (sem->holder->priority < tsk->priority) {
-					//do_priority_parenting(tsk, sem->holder);
+					do_priority_parenting(tsk, sem->holder);
 				}
 			} else {
 				printk(KERN_INFO "__down error");
