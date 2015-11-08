@@ -328,7 +328,8 @@ struct task_struct {
 
 	int old_priority; // Old priority before using the parent's priority.
 						//If not using the parent's priority, then should have a value of -1
-	task_t *waiting_on; // Which task is it waiting for?
+
+	struct semaphore *waiting_on; // Which semaphore to wait on?
 
 	unsigned long sleep_time;
 
@@ -860,6 +861,7 @@ extern int do_fork(unsigned long, unsigned long, struct pt_regs *, unsigned long
 
 extern void FASTCALL(add_wait_queue(wait_queue_head_t *q, wait_queue_t * wait));
 extern void FASTCALL(add_wait_queue_exclusive(wait_queue_head_t *q, wait_queue_t * wait));
+extern void FASTCALL(add_wait_queue_exclusive_sorted(wait_queue_head_t *q, wait_queue_t * wait));
 extern void FASTCALL(remove_wait_queue(wait_queue_head_t *q, wait_queue_t * wait));
 
 extern long kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
