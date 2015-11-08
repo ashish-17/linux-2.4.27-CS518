@@ -284,6 +284,14 @@ typedef struct task_struct task_t;
 typedef struct mlfq mlfq_t;
 
 struct task_struct {
+	// priority inversion
+
+	unsigned long orig_policy,orig_priority;
+	int sem_count;//number of semaphre that obtained and not release;
+	wait_queue_t *waitqt;// the wait queue that the task currently on
+	struct semaphore *sem;
+	
+
 	/*
 	 * offsets of these are hardcoded elsewhere - touch with care
 	 */
