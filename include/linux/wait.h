@@ -200,6 +200,7 @@ static inline void __add_wait_queue(wait_queue_head_t *head, wait_queue_t *new)
 	if (!head->task_list.next || !head->task_list.prev)
 		WQ_BUG();
 #endif
+
 	list_add(&new->task_list, &head->task_list);
 }
 
@@ -217,7 +218,20 @@ static inline void __add_wait_queue_tail(wait_queue_head_t *head,
 	if (!head->task_list.next || !head->task_list.prev)
 		WQ_BUG();
 #endif
-	list_add_tail(&new->task_list, &head->task_list);
+	//priority inversion
+	
+		wait_queue_t *waitqt;
+		struct list_head *tmp;
+		list_for_each(tmp,&(head->task_list));
+		{
+			waitqt = list_entry(tmp,wait_queue_t,task_list);
+			if(waitqt->flags & WQ_FLAG_EXCLUSIVE && new->task->priority < waitqt->task->priority)
+			{
+				break;
+			}
+		}
+		list_add_tail(&new->task_list,tmp);
+	//priority inversion
 }
 
 static inline void __remove_wait_queue(wait_queue_head_t *head,
