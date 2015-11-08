@@ -80,7 +80,6 @@ void __down(struct semaphore * sem)
 	sem->sleepers++;
 	for (;;) {
 		int sleepers = sem->sleepers;
-		int test = 0;
 
 		/*
 		 * Add "everybody else" into it. They aren't
@@ -106,15 +105,8 @@ void __down(struct semaphore * sem)
 				tsk->waiting_on = sem->holder;
 				if (sem->holder->priority > tsk->priority) {
 					do_priority_parenting(tsk, sem->holder);
-					test = 1;
 				}
-			} else {
-				printk(KERN_INFO "__down error");
 			}
-		}
-
-		if (test == 1) {
-			printk(KERN_INFO "holder = %d with new priority = %d old priority = %d", sem->holder->pid, sem->holder->priority, sem->holder->old_priority);
 		}
 
 		schedule();

@@ -119,13 +119,15 @@ void do_priority_parenting(struct task_struct *h, struct task_struct *l) {
 	unsigned long flags;
 	lock_task_rq(rq, l, flags);
 
+	if (h->priority < MAX_PRIO) {
+		deactivate_task(l, rq);
 
-	deactivate_task(l, rq);
+		l->old_priority = l->priority;
+		l->priority = h->priority;
+		l->counter = PRIO_TO_TIMESLICE(l->priority);
 
-	l->old_priority = l->priority;
-	l->priority = h->priority;
-
-	activate_task(l, rq);
+		activate_task(l, rq);
+	}
 
 	unlock_task_rq(rq, l, flags);
 	//printk(KERN_INFO "do_priority_parenting (%d)\n", l->priority);
@@ -137,12 +139,15 @@ void undo_priority_parenting(struct task_struct *l) {
 	unsigned long flags;
 	lock_task_rq(rq, l, flags);
 
-	deactivate_task(l, rq);
+	if (l->old_priority != -1) {
+		deactivate_task(l, rq);
 
-	l->priority = l->old_priority;
-	l->old_priority = -1;
+		l->priority = l->old_priority;
+		l->old_priority = -1;
+		l->counter = PRIO_TO_TIMESLICE(l->priority);
 
-	activate_task(l, rq);
+		activate_task(l, rq);
+	}
 
 	unlock_task_rq(rq, l, flags);
 	//printk(KERN_INFO "undo_priority_parenting (%d)\n", l->priority);
