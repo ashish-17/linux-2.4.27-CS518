@@ -483,9 +483,7 @@ need_resched_back:
 				}
 			}
 		} else if ((prev->state == TASK_RUNNING) && (prev->waiting_on != NULL)) {
-			if (prev->waiting_on != NULL) {
-				undo_priority_parenting(prev->waiting_on->holder);
-			}
+			undo_priority_parenting(prev->waiting_on->holder);
 		}
 
 	}
