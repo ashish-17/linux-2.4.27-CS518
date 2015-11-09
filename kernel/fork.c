@@ -59,16 +59,6 @@ void add_wait_queue_exclusive(wait_queue_head_t *q, wait_queue_t * wait)
 	wq_write_unlock_irqrestore(&q->lock, flags);
 }
 
-void add_wait_queue_exclusive_sorted(wait_queue_head_t *q, wait_queue_t * wait)
-{
-	unsigned long flags;
-
-	wait->flags |= WQ_FLAG_EXCLUSIVE;
-	wq_write_lock_irqsave(&q->lock, flags);
-	__add_wait_queue_tail_sorted(q, wait);
-	wq_write_unlock_irqrestore(&q->lock, flags);
-}
-
 void remove_wait_queue(wait_queue_head_t *q, wait_queue_t * wait)
 {
 	unsigned long flags;

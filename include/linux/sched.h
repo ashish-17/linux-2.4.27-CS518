@@ -861,7 +861,6 @@ extern int do_fork(unsigned long, unsigned long, struct pt_regs *, unsigned long
 
 extern void FASTCALL(add_wait_queue(wait_queue_head_t *q, wait_queue_t * wait));
 extern void FASTCALL(add_wait_queue_exclusive(wait_queue_head_t *q, wait_queue_t * wait));
-extern void FASTCALL(add_wait_queue_exclusive_sorted(wait_queue_head_t *q, wait_queue_t * wait));
 extern void FASTCALL(remove_wait_queue(wait_queue_head_t *q, wait_queue_t * wait));
 
 extern long kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);

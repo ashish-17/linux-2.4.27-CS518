@@ -62,7 +62,7 @@ void __down(struct semaphore * sem)
 	struct task_struct *tsk = current;
 	DECLARE_WAITQUEUE(wait, tsk);
 	tsk->state = TASK_UNINTERRUPTIBLE;
-	add_wait_queue_exclusive_sorted(&sem->wait, &wait);
+	add_wait_queue_exclusive(&sem->wait, &wait);
 
 	spin_lock_irq(&semaphore_lock);
 	sem->sleepers++;
@@ -108,7 +108,7 @@ int __down_interruptible(struct semaphore * sem)
 	struct task_struct *tsk = current;
 	DECLARE_WAITQUEUE(wait, tsk);
 	tsk->state = TASK_INTERRUPTIBLE;
-	add_wait_queue_exclusive_sorted(&sem->wait, &wait);
+	add_wait_queue_exclusive(&sem->wait, &wait);
 
 	spin_lock_irq(&semaphore_lock);
 	sem->sleepers ++;

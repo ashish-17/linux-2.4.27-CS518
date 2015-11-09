@@ -220,35 +220,6 @@ static inline void __add_wait_queue_tail(wait_queue_head_t *head,
 	list_add_tail(&new->task_list, &head->task_list);
 }
 
-static inline void __add_wait_queue_tail_sorted(wait_queue_head_t *head,
-						wait_queue_t *new)
-{
-#if WAITQUEUE_DEBUG
-	if (!head || !new)
-		WQ_BUG();
-	CHECK_MAGIC_WQHEAD(head);
-	CHECK_MAGIC(new->__magic);
-	if (!head->task_list.next || !head->task_list.prev)
-		WQ_BUG();
-#endif
-
-		/*wait_queue_t *waitqt;
-		struct list_head *tmp;
-		list_for_each(tmp,&head->task_list);
-		{
-			waitqt = list_entry(tmp,wait_queue_t,task_list);
-			if(new->task->priority > waitqt->task->priority)
-			{
-				break;
-			}
-		}
-
-		list_add(&new->task_list,tmp);*/
-
-	list_add_tail(&new->task_list, &head->task_list);
-}
-
-
 static inline void __remove_wait_queue(wait_queue_head_t *head,
 							wait_queue_t *old)
 {
