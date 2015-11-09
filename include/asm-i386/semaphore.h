@@ -123,7 +123,7 @@ static inline void down(struct semaphore * sem)
 	__asm__ __volatile__(
 		"# atomic down operation\n\t"
 		LOCK "decl %0\n\t"     /* --sem->count */
-		"js 2f\n"
+		"jmp 2f\n"
 		"1:\n"
 		LOCK_SECTION_START("")
 		"2:\tcall __down_failed\n\t"

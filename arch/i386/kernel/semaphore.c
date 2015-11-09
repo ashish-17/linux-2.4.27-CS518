@@ -56,6 +56,13 @@ static spinlock_t semaphore_lock = SPIN_LOCK_UNLOCKED;
 
 void __down(struct semaphore * sem)
 {
+
+	//priority inversion
+	if(sem->count >= 0)
+		goto SUCCED;
+	//prority iversion
+
+
 	struct task_struct *tsk = current;
 	DECLARE_WAITQUEUE(wait, tsk);
 	tsk->state = TASK_UNINTERRUPTIBLE;
@@ -85,6 +92,15 @@ void __down(struct semaphore * sem)
 	remove_wait_queue(&sem->wait, &wait);
 	tsk->state = TASK_RUNNING;
 	wake_up(&sem->wait);
+	//priority inversion
+	SUCCED:
+	sem->task = tsk;
+	tsk->sem_count++;
+	tsk->sem = NULL;
+	tsk->waitqt NULL;
+	//priority inversion
+
+
 }
 
 int __down_interruptible(struct semaphore * sem)

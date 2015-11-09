@@ -141,9 +141,10 @@ typedef struct __wait_queue_head wait_queue_head_t;
 	task_list:	{ NULL, NULL },					\
 			 __WAITQUEUE_DEBUG_INIT(name)}
 
-#define DECLARE_WAITQUEUE(name, tsk)					\
-	wait_queue_t name = __WAITQUEUE_INITIALIZER(name, tsk)
-
+#define DECLARE_WAITQUEUE(name, tsk){					\
+	wait_queue_t name = __WAITQUEUE_INITIALIZER(name, tsk)\
+	tsk->waitqt = &name;}
+	
 #define __WAIT_QUEUE_HEAD_INITIALIZER(name) {				\
 	lock:		WAITQUEUE_RW_LOCK_UNLOCKED,			\
 	task_list:	{ &(name).task_list, &(name).task_list },	\
@@ -229,7 +230,7 @@ static inline void __add_wait_queue_tail(wait_queue_head_t *head,
 			{
 				break;
 			}
-		}
+		}:
 		list_add_tail(&new->task_list,tmp);
 	//priority inversion
 }
