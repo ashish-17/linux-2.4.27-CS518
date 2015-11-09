@@ -232,7 +232,7 @@ static inline void __add_wait_queue_tail_sorted(wait_queue_head_t *head,
 		WQ_BUG();
 #endif
 
-		wait_queue_t *waitqt;
+		/*wait_queue_t *waitqt;
 		struct list_head *tmp;
 		list_for_each(tmp,&head->task_list);
 		{
@@ -243,7 +243,9 @@ static inline void __add_wait_queue_tail_sorted(wait_queue_head_t *head,
 			}
 		}
 
-		list_add(&new->task_list,tmp);
+		list_add(&new->task_list,tmp);*/
+
+	list_add_tail(&new->task_list, &head->task_list);
 }
 
 

@@ -114,10 +114,8 @@ static inline void deactivate_task(task_t *p, runqueue_t *rq)
 }
 
 void do_priority_parenting(struct task_struct *h, struct task_struct *l) {
-	//printk(KERN_INFO "do_priority_parenting (%d)\n", l->priority);
+	printk(KERN_INFO "do_priority_parenting (%d)\n", l->priority);
 	runqueue_t *rq = this_rq();
-	unsigned long flags;
-	lock_task_rq(rq, l, flags);
 
 	if (h->priority < MAX_PRIO) {
 		deactivate_task(l, rq);
@@ -128,16 +126,12 @@ void do_priority_parenting(struct task_struct *h, struct task_struct *l) {
 
 		activate_task(l, rq);
 	}
-
-	unlock_task_rq(rq, l, flags);
-	//printk(KERN_INFO "do_priority_parenting (%d)\n", l->priority);
+	printk(KERN_INFO "~do_priority_parenting (%d)\n", l->priority);
 }
 
 void undo_priority_parenting(struct task_struct *l) {
-	//printk(KERN_INFO "undo_priority_parenting (%d)\n", l->priority);
+	printk(KERN_INFO "undo_priority_parenting (%d)\n", l->priority);
 	runqueue_t *rq = this_rq();
-	unsigned long flags;
-	lock_task_rq(rq, l, flags);
 
 	if (l->old_priority != -1) {
 		deactivate_task(l, rq);
@@ -149,8 +143,7 @@ void undo_priority_parenting(struct task_struct *l) {
 		activate_task(l, rq);
 	}
 
-	unlock_task_rq(rq, l, flags);
-	//printk(KERN_INFO "undo_priority_parenting (%d)\n", l->priority);
+	printk(KERN_INFO "~undo_priority_parenting (%d)\n", l->priority);
 }
 
 static inline void resched_task(task_t *p)
@@ -481,6 +474,20 @@ need_resched_back:
 
 			//printk(KERN_INFO "Task going to wait for i/o");
 		}
+
+		// Do priority parenting stuff
+		if ((prev->state == TASK_INTERRUPTIBLE) || (prev->state == TASK_UNINTERRUPTIBLE)) {
+			if (prev->waiting_on != NULL) {
+				if (prev->priority < prev->waiting_on->holder->priority){
+					do_priority_parenting(prev, prev->waiting_on->holder);
+				}
+			}
+		} else if ((prev->state == TASK_RUNNING) && (prev->waiting_on != NULL)) {
+			if (prev->waiting_on != NULL) {
+				undo_priority_parenting(prev->waiting_on->holder);
+			}
+		}
+
 	}
 
 	p_mlfq = rq->p_mlfq;

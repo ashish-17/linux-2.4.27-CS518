@@ -50,6 +50,9 @@
 void __up(struct semaphore *sem)
 {
 	wake_up(&sem->wait);
+	if (sem->is_mutex == 1) {
+		sem->holder = NULL;
+	}
 }
 
 static spinlock_t semaphore_lock = SPIN_LOCK_UNLOCKED;
@@ -89,6 +92,7 @@ void __down(struct semaphore * sem)
 		}
 
 		schedule();
+		tsk->waiting_on = NULL;
 		tsk->state = TASK_UNINTERRUPTIBLE;
 		spin_lock_irq(&semaphore_lock);
 	}
@@ -149,6 +153,7 @@ int __down_interruptible(struct semaphore * sem)
 		}
 
 		schedule();
+		tsk->waiting_on = NULL;
 		tsk->state = TASK_INTERRUPTIBLE;
 		spin_lock_irq(&semaphore_lock);
 	}
