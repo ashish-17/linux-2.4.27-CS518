@@ -114,7 +114,7 @@ static inline void deactivate_task(task_t *p, runqueue_t *rq)
 }
 
 void do_priority_parenting(struct task_struct *h, struct task_struct *l) {
-	printk(KERN_INFO "do_priority_parenting (%d)\n", l->priority);
+	//printk(KERN_INFO "do_priority_parenting (%d)\n", l->priority);
 	runqueue_t *rq = this_rq();
 
 	if (h->priority < MAX_PRIO) {
@@ -126,11 +126,11 @@ void do_priority_parenting(struct task_struct *h, struct task_struct *l) {
 
 		activate_task(l, rq);
 	}
-	printk(KERN_INFO "~do_priority_parenting (%d)\n", l->priority);
+	//printk(KERN_INFO "~do_priority_parenting (%d)\n", l->priority);
 }
 
 void undo_priority_parenting(struct task_struct *l) {
-	printk(KERN_INFO "undo_priority_parenting (%d)\n", l->priority);
+	//printk(KERN_INFO "undo_priority_parenting (%d)\n", l->priority);
 	runqueue_t *rq = this_rq();
 
 	if (l->old_priority != -1) {
@@ -143,7 +143,7 @@ void undo_priority_parenting(struct task_struct *l) {
 		activate_task(l, rq);
 	}
 
-	printk(KERN_INFO "~undo_priority_parenting (%d)\n", l->priority);
+	//printk(KERN_INFO "~undo_priority_parenting (%d)\n", l->priority);
 }
 
 static inline void resched_task(task_t *p)
