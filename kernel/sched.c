@@ -819,6 +819,7 @@ static inline struct task_struct *find_process_by_pid(pid_t pid)
 static int setscheduler(pid_t pid, int policy, 
 			struct sched_param *param)
 {
+	printk(KERN_INFO "setscheduler()\n");
 	struct sched_param lp;
 	struct task_struct *p;
 	int retval;
@@ -855,16 +856,19 @@ static int setscheduler(pid_t pid, int policy,
 				policy != SCHED_OTHER)
 			goto out_unlock;
 	}
-	
+
+	printk(KERN_INFO "setscheduler() 1 \n");
 	/*
 	 * Valid priorities for SCHED_FIFO and SCHED_RR are 1..99, valid
-	 * priority for SCHED_OTHER is 0.
+	 * priority for SCHED_OTHER are 0...255.
 	 */
 	retval = -EINVAL;
-	if (lp.sched_priority < 0 || lp.sched_priority > 99)
+	if ((policy == SCHED_FIFO || policy == SCHED_RR) && (lp.sched_priority < 0 || lp.sched_priority > 99))
 		goto out_unlock;
-	if ((policy == SCHED_OTHER) != (lp.sched_priority == 0))
+	if ((policy == SCHED_OTHER) && (lp.sched_priority <0 || lp.sched_priority >= MAX_PRIO))
 		goto out_unlock;
+
+	printk(KERN_INFO "setscheduler() 2 \n");
 
 	retval = -EPERM;
 	if ((policy == SCHED_FIFO || policy == SCHED_RR) && 
@@ -882,9 +886,11 @@ static int setscheduler(pid_t pid, int policy,
 	p->policy = policy;
 	p->rt_priority = lp.sched_priority;
 
-	p->priority = NICE_TO_PRIO(p->nice);
+	p->priority = lp.sched_priority;
 	if (p_mlfq)
 		activate_task(p, task_rq(p));
+
+	printk(KERN_INFO "Success in changing priority");
 
 	current->need_resched = 1;
 
@@ -894,6 +900,7 @@ out_unlock_tasklist:
 	read_unlock_irq(&tasklist_lock);
 
 out_nounlock:
+printk(KERN_INFO "~setscheduler()\n");
 	return retval;
 }
 
